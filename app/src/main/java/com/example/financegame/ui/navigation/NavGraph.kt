@@ -18,6 +18,7 @@ import com.example.financegame.ui.screens.expenses.ExpensesScreen
 import com.example.financegame.ui.screens.profile.ProfileScreen
 import com.example.financegame.ui.screens.quests.QuestsScreen
 import com.example.financegame.ui.screens.reports.ReportsScreen
+import com.example.financegame.ui.screens.settings.SettingsScreen
 
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -26,6 +27,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Quests : Screen("quests", "Квести", Icons.Default.EmojiEvents)
     object Achievements : Screen("achievements", "Досягнення", Icons.Default.Stars)
     object Reports : Screen("reports", "Звіти", Icons.Default.BarChart)
+    object Settings : Screen("settings", "Налаштування", Icons.Default.Settings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +39,8 @@ fun MainScreen() {
         Screen.Expenses,
         Screen.Quests,
         Screen.Achievements,
-        Screen.Reports
+        Screen.Reports,
+        Screen.Settings
     )
 
     Scaffold(
@@ -53,7 +56,6 @@ fun MainScreen() {
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {
-                                // Уникаємо створення багатьох копій екранів
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -76,6 +78,11 @@ fun MainScreen() {
             composable(Screen.Quests.route) { QuestsScreen() }
             composable(Screen.Achievements.route) { AchievementsScreen() }
             composable(Screen.Reports.route) { ReportsScreen() }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onThemeChanged = { /* Тема оновиться автоматично */ }
+                )
+            }
         }
     }
 }

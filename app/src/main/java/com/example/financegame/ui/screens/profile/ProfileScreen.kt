@@ -164,7 +164,7 @@ fun ExperienceProgressCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(

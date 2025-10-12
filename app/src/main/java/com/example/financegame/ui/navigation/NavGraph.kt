@@ -19,6 +19,7 @@ import com.example.financegame.ui.screens.profile.ProfileScreen
 import com.example.financegame.ui.screens.quests.QuestsScreen
 import com.example.financegame.ui.screens.reports.ReportsScreen
 import com.example.financegame.ui.screens.settings.SettingsScreen
+import com.example.financegame.ui.screens.settings.SettingsViewModel
 
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -32,7 +33,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
     val navController = rememberNavController()
     val screens = listOf(
         Screen.Profile,
@@ -79,9 +80,16 @@ fun MainScreen() {
             composable(Screen.Achievements.route) { AchievementsScreen() }
             composable(Screen.Reports.route) { ReportsScreen() }
             composable(Screen.Settings.route) {
-                SettingsScreen(
-                    onThemeChanged = { /* Тема оновиться автоматично */ }
-                )
+                if (settingsViewModel != null) {
+                    SettingsScreen(
+                        viewModel = settingsViewModel,
+                        onThemeChanged = { /* Автоматично оновиться */ }
+                    )
+                } else {
+                    SettingsScreen(
+                        onThemeChanged = { /* Автоматично оновиться */ }
+                    )
+                }
             }
         }
     }

@@ -106,7 +106,7 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
             .fillMaxWidth()
             .padding(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = CardLight
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {

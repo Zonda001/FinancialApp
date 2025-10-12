@@ -3,6 +3,7 @@ package com.example.financegame.ui.screens.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financegame.data.settings.AppTheme
 import com.example.financegame.data.settings.SettingsDataStore
 import com.example.financegame.data.settings.ThemeMode
 import kotlinx.coroutines.flow.*
@@ -16,6 +17,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ThemeMode.SYSTEM
+        )
+
+    val appTheme: StateFlow<AppTheme> = settingsDataStore.appThemeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AppTheme.OCEAN
         )
 
     val language: StateFlow<String> = settingsDataStore.languageFlow
@@ -56,6 +64,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setTheme(theme: ThemeMode) {
         viewModelScope.launch {
             settingsDataStore.saveTheme(theme)
+        }
+    }
+
+    fun setAppTheme(theme: AppTheme) {
+        viewModelScope.launch {
+            settingsDataStore.saveAppTheme(theme)
         }
     }
 

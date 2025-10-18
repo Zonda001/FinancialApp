@@ -7,6 +7,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -33,10 +34,12 @@ private fun getOceanLight() = lightColorScheme(
     surface = OceanBreezeColors.SurfaceLight,
     surfaceVariant = OceanBreezeColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = OceanBreezeColors.Error
+    onSecondary = Color(0xFF0C4A6E),        // Темний текст для акцентів
+    onBackground = Color(0xFF0C4A6E),       // Темний синій текст на світлому фоні
+    onSurface = Color(0xFF0C4A6E),          // Темний текст на поверхнях
+    onSurfaceVariant = Color(0xFF0369A1),   // Середній синій для карток
+    error = OceanBreezeColors.Error,
+    onError = TextLight
 )
 
 private fun getOceanDark() = darkColorScheme(
@@ -47,10 +50,12 @@ private fun getOceanDark() = darkColorScheme(
     surface = OceanBreezeColors.SurfaceDark,
     surfaceVariant = OceanBreezeColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = OceanBreezeColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFE0F2FE),
+    onSurface = Color(0xFFE0F2FE),
+    onSurfaceVariant = Color(0xFFBAE6FD),
+    error = OceanBreezeColors.Error,
+    onError = TextLight
 )
 
 // Sakura Dream
@@ -62,10 +67,12 @@ private fun getSakuraLight() = lightColorScheme(
     surface = SakuraDreamColors.SurfaceLight,
     surfaceVariant = SakuraDreamColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = SakuraDreamColors.Error
+    onSecondary = Color(0xFF831843),
+    onBackground = Color(0xFF831843),       // Темно-рожевий текст
+    onSurface = Color(0xFF831843),
+    onSurfaceVariant = Color(0xFF9F1239),   // Середній рожевий для карток
+    error = SakuraDreamColors.Error,
+    onError = TextLight
 )
 
 private fun getSakuraDark() = darkColorScheme(
@@ -76,10 +83,12 @@ private fun getSakuraDark() = darkColorScheme(
     surface = SakuraDreamColors.SurfaceDark,
     surfaceVariant = SakuraDreamColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = SakuraDreamColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFFCE7F3),       // Світлий рожевий текст
+    onSurface = Color(0xFFFCE7F3),
+    onSurfaceVariant = Color(0xFFFBCFE8),
+    error = SakuraDreamColors.Error,
+    onError = TextLight
 )
 
 // Forest Mist
@@ -91,10 +100,12 @@ private fun getForestLight() = lightColorScheme(
     surface = ForestMistColors.SurfaceLight,
     surfaceVariant = ForestMistColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = ForestMistColors.Error
+    onSecondary = Color(0xFF065F46),
+    onBackground = Color(0xFF065F46),       // Темно-зелений текст
+    onSurface = Color(0xFF065F46),
+    onSurfaceVariant = Color(0xFF047857),
+    error = ForestMistColors.Error,
+    onError = TextLight
 )
 
 private fun getForestDark() = darkColorScheme(
@@ -105,10 +116,12 @@ private fun getForestDark() = darkColorScheme(
     surface = ForestMistColors.SurfaceDark,
     surfaceVariant = ForestMistColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = ForestMistColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFD1FAE5),       // Світлий зелений текст
+    onSurface = Color(0xFFD1FAE5),
+    onSurfaceVariant = Color(0xFFA7F3D0),
+    error = ForestMistColors.Error,
+    onError = TextLight
 )
 
 // Sunset Glow
@@ -119,11 +132,13 @@ private fun getSunsetLight() = lightColorScheme(
     background = SunsetGlowColors.BackgroundLight,
     surface = SunsetGlowColors.SurfaceLight,
     surfaceVariant = SunsetGlowColors.CardLight,
-    onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = SunsetGlowColors.Error
+    onPrimary = Color(0xFF78350F),          // Темний текст на золотому
+    onSecondary = Color(0xFF78350F),
+    onBackground = Color(0xFF78350F),       // Темно-коричневий текст
+    onSurface = Color(0xFF78350F),
+    onSurfaceVariant = Color(0xFF92400E),
+    error = SunsetGlowColors.Error,
+    onError = TextLight
 )
 
 private fun getSunsetDark() = darkColorScheme(
@@ -134,10 +149,12 @@ private fun getSunsetDark() = darkColorScheme(
     surface = SunsetGlowColors.SurfaceDark,
     surfaceVariant = SunsetGlowColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = SunsetGlowColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFFEF3C7),       // Світлий золотий текст
+    onSurface = Color(0xFFFEF3C7),
+    onSurfaceVariant = Color(0xFFFDE68A),
+    error = SunsetGlowColors.Error,
+    onError = TextLight
 )
 
 // Midnight Purple
@@ -149,10 +166,12 @@ private fun getMidnightLight() = lightColorScheme(
     surface = MidnightPurpleColors.SurfaceLight,
     surfaceVariant = MidnightPurpleColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = MidnightPurpleColors.Error
+    onSecondary = Color(0xFF581C87),
+    onBackground = Color(0xFF581C87),       // Темно-фіолетовий текст
+    onSurface = Color(0xFF581C87),
+    onSurfaceVariant = Color(0xFF6B21A8),
+    error = MidnightPurpleColors.Error,
+    onError = TextLight
 )
 
 private fun getMidnightDark() = darkColorScheme(
@@ -163,10 +182,12 @@ private fun getMidnightDark() = darkColorScheme(
     surface = MidnightPurpleColors.SurfaceDark,
     surfaceVariant = MidnightPurpleColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = MidnightPurpleColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFEDE9FE),       // Світлий фіолетовий текст
+    onSurface = Color(0xFFEDE9FE),
+    onSurfaceVariant = Color(0xFFDDD6FE),
+    error = MidnightPurpleColors.Error,
+    onError = TextLight
 )
 
 // Ice Crystal
@@ -178,10 +199,12 @@ private fun getIceLight() = lightColorScheme(
     surface = IceCrystalColors.SurfaceLight,
     surfaceVariant = IceCrystalColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = IceCrystalColors.Error
+    onSecondary = Color(0xFF164E63),
+    onBackground = Color(0xFF164E63),       // Темно-синій текст
+    onSurface = Color(0xFF164E63),
+    onSurfaceVariant = Color(0xFF155E75),
+    error = IceCrystalColors.Error,
+    onError = TextLight
 )
 
 private fun getIceDark() = darkColorScheme(
@@ -192,10 +215,12 @@ private fun getIceDark() = darkColorScheme(
     surface = IceCrystalColors.SurfaceDark,
     surfaceVariant = IceCrystalColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = IceCrystalColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFCFFAFE),       // Світлий крижаний текст
+    onSurface = Color(0xFFCFFAFE),
+    onSurfaceVariant = Color(0xFFA5F3FC),
+    error = IceCrystalColors.Error,
+    onError = TextLight
 )
 
 // Lava Flow
@@ -207,10 +232,12 @@ private fun getLavaLight() = lightColorScheme(
     surface = LavaFlowColors.SurfaceLight,
     surfaceVariant = LavaFlowColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = LavaFlowColors.Error
+    onSecondary = Color(0xFF7F1D1D),
+    onBackground = Color(0xFF7F1D1D),       // Темно-червоний текст
+    onSurface = Color(0xFF7F1D1D),
+    onSurfaceVariant = Color(0xFF991B1B),
+    error = LavaFlowColors.Error,
+    onError = TextLight
 )
 
 private fun getLavaDark() = darkColorScheme(
@@ -221,10 +248,12 @@ private fun getLavaDark() = darkColorScheme(
     surface = LavaFlowColors.SurfaceDark,
     surfaceVariant = LavaFlowColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = LavaFlowColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFFEE2E2),       // Світлий червоний текст
+    onSurface = Color(0xFFFEE2E2),
+    onSurfaceVariant = Color(0xFFFECACA),
+    error = LavaFlowColors.Error,
+    onError = TextLight
 )
 
 // Moonlight
@@ -236,10 +265,12 @@ private fun getMoonlightLight() = lightColorScheme(
     surface = MoonlightColors.SurfaceLight,
     surfaceVariant = MoonlightColors.CardLight,
     onPrimary = TextLight,
-    onSecondary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    error = MoonlightColors.Error
+    onSecondary = Color(0xFF3730A3),
+    onBackground = Color(0xFF3730A3),       // Темно-індиго текст
+    onSurface = Color(0xFF3730A3),
+    onSurfaceVariant = Color(0xFF4338CA),
+    error = MoonlightColors.Error,
+    onError = TextLight
 )
 
 private fun getMoonlightDark() = darkColorScheme(
@@ -250,10 +281,12 @@ private fun getMoonlightDark() = darkColorScheme(
     surface = MoonlightColors.SurfaceDark,
     surfaceVariant = MoonlightColors.CardDark,
     onPrimary = TextLight,
-    onSecondary = TextDark,
-    onBackground = TextDark,
-    onSurface = TextDark,
-    error = MoonlightColors.Error
+    onSecondary = TextLight,
+    onBackground = Color(0xFFE0E7FF),       // Світлий індиго текст
+    onSurface = Color(0xFFE0E7FF),
+    onSurfaceVariant = Color(0xFFC7D2FE),
+    error = MoonlightColors.Error,
+    onError = TextLight
 )
 
 @Composable

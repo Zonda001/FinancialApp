@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.*
 import com.example.financegame.ui.theme.*
+import com.example.financegame.ui.theme.TextPrimary
+import com.example.financegame.ui.theme.TextSecondary
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*

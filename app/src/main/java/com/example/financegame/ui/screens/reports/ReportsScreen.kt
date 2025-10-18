@@ -22,6 +22,8 @@ import com.example.financegame.ui.screens.expenses.formatCurrency
 import com.example.financegame.ui.screens.expenses.getCategoryColor
 import com.example.financegame.ui.screens.expenses.getCategoryIcon
 import com.example.financegame.ui.theme.*
+import com.example.financegame.ui.theme.TextPrimary
+import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +39,8 @@ fun ReportsScreen(
             TopAppBar(
                 title = { Text("Звіти та аналітика", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = TextLight
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -141,7 +143,7 @@ fun PeriodSelector(
 fun OverallStatsCard(report: PeriodReport) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
@@ -255,7 +257,7 @@ fun CategoryExpenseCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
@@ -331,7 +333,7 @@ fun AdditionalStatsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(

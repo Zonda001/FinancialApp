@@ -20,6 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.settings.ThemeMode
 import com.example.financegame.data.settings.AppTheme
 import com.example.financegame.ui.theme.*
+import com.example.financegame.ui.theme.TextPrimary
+import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

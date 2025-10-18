@@ -20,6 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.Quest
 import com.example.financegame.data.local.database.entities.QuestType
 import com.example.financegame.ui.theme.*
+import com.example.financegame.ui.theme.TextPrimary
+import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,12 +37,12 @@ fun QuestsScreen(
             TopAppBar(
                 title = { Text("Мої квести", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = TextLight
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 actions = {
                     IconButton(onClick = { viewModel.refreshQuests() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Оновити", tint = TextLight)
+                        Icon(Icons.Default.Refresh, contentDescription = "Оновити", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )

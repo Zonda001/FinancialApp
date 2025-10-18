@@ -26,6 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.Achievement
 import com.example.financegame.data.local.database.entities.AchievementCategory
 import com.example.financegame.ui.theme.*
+import com.example.financegame.ui.theme.TextPrimary
+import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +52,8 @@ fun AchievementsScreen(
             TopAppBar(
                 title = { Text("Досягнення", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = TextLight
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -234,9 +236,9 @@ fun AchievementCard(achievement: Achievement) {
             .scale(scale),
         colors = CardDefaults.cardColors(
             containerColor = if (achievement.isUnlocked) {
-                CardLight
+                MaterialTheme.colorScheme.surfaceVariant
             } else {
-                CardLight.copy(alpha = 0.6f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
             }
         ),
         elevation = CardDefaults.cardElevation(

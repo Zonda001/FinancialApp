@@ -2,156 +2,170 @@ package com.example.financegame.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// 🌊 OCEAN BREEZE - Яскравий океан
 object OceanBreezeColors {
     val Primary = Color(0xFF0EA5E9)
     val Secondary = Color(0xFF06B6D4)
-    val Accent = Color(0xFF8B5CF6)
+    val Accent = Color(0xFF3B82F6)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFFEF4444)
 
-    val BackgroundLight = Color(0xFFF0F9FF)
+    // Світла тема - яскраві кольори
+    val BackgroundLight = Color(0xFFE0F2FE)      // Яскравий блакитний фон
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFFAFDFF)
+    val CardLight = Color(0xFFBAE6FD)            // Яскраві блакитні картки
 
-    val BackgroundDark = Color(0xFF0F172A)
-    val SurfaceDark = Color(0xFF1E293B)
-    val CardDark = Color(0xFF334155)
+    // Темна тема
+    val BackgroundDark = Color(0xFF0C4A6E)       // Глибокий синій
+    val SurfaceDark = Color(0xFF075985)
+    val CardDark = Color(0xFF0284C7)
 }
 
-// 🌸 SAKURA DREAM
+// 🌸 SAKURA DREAM - Яскравий рожевий сон
 object SakuraDreamColors {
     val Primary = Color(0xFFEC4899)
     val Secondary = Color(0xFFF472B6)
-    val Accent = Color(0xFFA78BFA)
+    val Accent = Color(0xFFDB2777)
     val Success = Color(0xFF34D399)
     val Error = Color(0xFFFB7185)
 
-    val BackgroundLight = Color(0xFFFDF2F8)
+    // Світла тема - яскраві рожеві
+    val BackgroundLight = Color(0xFFFCE7F3)      // Яскравий рожевий
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFFCE7F3)
+    val CardLight = Color(0xFFFBCFE8)            // Яскраві рожеві картки
 
-    val BackgroundDark = Color(0xFF1F1729)
-    val SurfaceDark = Color(0xFF312138)
-    val CardDark = Color(0xFF4A3A52)
+    // Темна тема
+    val BackgroundDark = Color(0xFF831843)       // Темно-рожевий
+    val SurfaceDark = Color(0xFF9F1239)
+    val CardDark = Color(0xFFBE185D)
 }
 
-// 🌿 FOREST MIST
+// 🌿 FOREST MIST - Яскрава зелень
 object ForestMistColors {
-    val Primary = Color(0xFF059669)
-    val Secondary = Color(0xFF10B981)
-    val Accent = Color(0xFF8B5CF6)
+    val Primary = Color(0xFF10B981)
+    val Secondary = Color(0xFF34D399)
+    val Accent = Color(0xFF059669)
     val Success = Color(0xFF22C55E)
     val Error = Color(0xFFEF4444)
 
-    val BackgroundLight = Color(0xFFF0FDF4)
+    // Світла тема - яскрава зелень
+    val BackgroundLight = Color(0xFFD1FAE5)      // Яскравий зелений
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFECFDF5)
+    val CardLight = Color(0xFFA7F3D0)            // Яскраві зелені картки
 
-    val BackgroundDark = Color(0xFF0F1B13)
-    val SurfaceDark = Color(0xFF1A2F1F)
-    val CardDark = Color(0xFF2D4A35)
+    // Темна тема
+    val BackgroundDark = Color(0xFF065F46)       // Темно-зелений
+    val SurfaceDark = Color(0xFF047857)
+    val CardDark = Color(0xFF059669)
 }
 
-// 🌅 SUNSET GLOW
+// 🌅 SUNSET GLOW - Яскравий захід
 object SunsetGlowColors {
     val Primary = Color(0xFFF59E0B)
-    val Secondary = Color(0xFFEF4444)
+    val Secondary = Color(0xFFFBBF24)
     val Accent = Color(0xFFF97316)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFFDC2626)
 
-    val BackgroundLight = Color(0xFFFFFBEB)
+    // Світла тема - яскраві золоті
+    val BackgroundLight = Color(0xFFFEF3C7)      // Яскравий золотий
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFFEF3C7)
+    val CardLight = Color(0xFFFDE68A)            // Яскраві золоті картки
 
-    val BackgroundDark = Color(0xFF1F1410)
-    val SurfaceDark = Color(0xFF2D1F1A)
-    val CardDark = Color(0xFF4A3426)
+    // Темна тема
+    val BackgroundDark = Color(0xFF92400E)       // Темно-золотий
+    val SurfaceDark = Color(0xFFB45309)
+    val CardDark = Color(0xFFD97706)
 }
 
-// 🌌 MIDNIGHT PURPLE
+// 🌌 MIDNIGHT PURPLE - Яскрава магія
 object MidnightPurpleColors {
     val Primary = Color(0xFF8B5CF6)
     val Secondary = Color(0xFFA78BFA)
-    val Accent = Color(0xFFEC4899)
+    val Accent = Color(0xFF7C3AED)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFFEF4444)
 
-    val BackgroundLight = Color(0xFFFAF5FF)
+    // Світла тема - яскраві фіолетові
+    val BackgroundLight = Color(0xFFEDE9FE)      // Яскравий фіолетовий
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFF3E8FF)
+    val CardLight = Color(0xFFDDD6FE)            // Яскраві фіолетові картки
 
-    val BackgroundDark = Color(0xFF1A0F2E)
-    val SurfaceDark = Color(0xFF2D1B4E)
-    val CardDark = Color(0xFF452F6B)
+    // Темна тема
+    val BackgroundDark = Color(0xFF581C87)       // Темно-фіолетовий
+    val SurfaceDark = Color(0xFF6B21A8)
+    val CardDark = Color(0xFF7E22CE)
 }
 
-// ❄️ ICE CRYSTAL
+// ❄️ ICE CRYSTAL - Яскравий лід
 object IceCrystalColors {
     val Primary = Color(0xFF06B6D4)
-    val Secondary = Color(0xFF0EA5E9)
-    val Accent = Color(0xFF8B5CF6)
+    val Secondary = Color(0xFF22D3EE)
+    val Accent = Color(0xFF0891B2)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFFEF4444)
 
-    val BackgroundLight = Color(0xFFECFEFF)
+    // Світла тема - яскраві блакитні
+    val BackgroundLight = Color(0xFFCFFAFE)      // Яскравий крижаний
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFCFFAFE)
+    val CardLight = Color(0xFFA5F3FC)            // Яскраві крижані картки
 
-    val BackgroundDark = Color(0xFF0A1628)
-    val SurfaceDark = Color(0xFF112840)
-    val CardDark = Color(0xFF1E3A5F)
+    // Темна тема
+    val BackgroundDark = Color(0xFF164E63)       // Темно-синій лід
+    val SurfaceDark = Color(0xFF155E75)
+    val CardDark = Color(0xFF0E7490)
 }
 
-// 🔥 LAVA FLOW
+// 🔥 LAVA FLOW - Яскравий вогонь
 object LavaFlowColors {
-    val Primary = Color(0xFFDC2626)
+    val Primary = Color(0xFFEF4444)
     val Secondary = Color(0xFFF97316)
-    val Accent = Color(0xFFFBBF24)
+    val Accent = Color(0xFFDC2626)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFF991B1B)
 
-    val BackgroundLight = Color(0xFFFEF2F2)
+    // Світла тема - яскраві червоні
+    val BackgroundLight = Color(0xFFFEE2E2)      // Яскравий червоний
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFFEE2E2)
+    val CardLight = Color(0xFFFECACA)            // Яскраві червоні картки
 
-    val BackgroundDark = Color(0xFF1F0A0A)
-    val SurfaceDark = Color(0xFF2D1515)
-    val CardDark = Color(0xFF4A2626)
+    // Темна тема
+    val BackgroundDark = Color(0xFF991B1B)       // Темно-червоний
+    val SurfaceDark = Color(0xFFB91C1C)
+    val CardDark = Color(0xFFDC2626)
 }
 
-// 🌙 MOONLIGHT
+// 🌙 MOONLIGHT - Яскрава ніч
 object MoonlightColors {
     val Primary = Color(0xFF6366F1)
     val Secondary = Color(0xFF818CF8)
-    val Accent = Color(0xFFA78BFA)
+    val Accent = Color(0xFF4F46E5)
     val Success = Color(0xFF10B981)
     val Error = Color(0xFFEF4444)
 
-    val BackgroundLight = Color(0xFFF5F7FF)
+    // Світла тема - яскраві індиго
+    val BackgroundLight = Color(0xFFE0E7FF)      // Яскравий індиго
     val SurfaceLight = Color(0xFFFFFFFF)
-    val CardLight = Color(0xFFE0E7FF)
+    val CardLight = Color(0xFFC7D2FE)            // Яскраві індиго картки
 
-    val BackgroundDark = Color(0xFF0F1120)
-    val SurfaceDark = Color(0xFF1A1D35)
-    val CardDark = Color(0xFF2D3250)
+    // Темна тема
+    val BackgroundDark = Color(0xFF3730A3)       // Темно-індиго
+    val SurfaceDark = Color(0xFF4338CA)
+    val CardDark = Color(0xFF4F46E5)
 }
 
 // ======================== ЗАГАЛЬНІ КОЛЬОРИ ========================
+
+
 val PrimaryBlue = Color(0xFF0EA5E9)
 val SecondaryGreen = Color(0xFF06B6D4)
 val AccentOrange = Color(0xFFFF9500)
 val AccentRed = Color(0xFFFF6B6B)
 
-val TextPrimary = Color(0xFF1F2937)
-val TextSecondary = Color(0xFF6B7280)
+// Статичні кольори (не змінюються)
 val TextLight = Color(0xFFFFFFFF)
-val TextDark = Color(0xFFE5E7EB)
 
-val CardLight = Color(0xFFFAFAFA)
-val CardDark = Color(0xFF2C2C2C)
-
-// Категорії витрат
+// Категорії витрат - яскравіші
 val FoodColor = Color(0xFFFF6B6B)
 val TransportColor = Color(0xFF4ECDC4)
 val EntertainmentColor = Color(0xFFFFE66D)

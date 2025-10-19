@@ -2,24 +2,28 @@ package com.example.financegame.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+
 
 // ======================== АВТОМАТИЧНІ КОЛЬОРИ ТЕКСТУ ========================
 
 /**
- * Повертає колір основного тексту залежно від теми
+ * Основний колір тексту - автоматично змінюється з темою
  * Використовується для заголовків та важливого тексту
  */
 val TextPrimary: Color
     @Composable
+    @ReadOnlyComposable
     get() = MaterialTheme.colorScheme.onSurface
 
 /**
- * Повертає колір вторинного тексту залежно від теми
+ * Вторинний колір тексту - автоматично змінюється з темою
  * Використовується для описів, підписів, менш важливого тексту
  */
 val TextSecondary: Color
     @Composable
+    @ReadOnlyComposable
     get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 /**
@@ -61,10 +65,7 @@ fun ThemedText(
 
 // ======================== LEGACY SUPPORT (для сумісності) ========================
 
-/**
- * Ці об'єкти тепер автоматично використовують правильні кольори
- * Старий код продовжить працювати!
- */
+
 object LegacyColors {
     val TextPrimary: Color
         @Composable

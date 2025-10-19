@@ -2,6 +2,7 @@ package com.example.financegame.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+
 // 🌊 OCEAN BREEZE - Яскравий океан
 object OceanBreezeColors {
     val Primary = Color(0xFF0EA5E9)
@@ -155,14 +156,15 @@ object MoonlightColors {
 }
 
 // ======================== ЗАГАЛЬНІ КОЛЬОРИ ========================
-
+// УВАГА: TextPrimary та TextSecondary тепер в ThemeHelpers.kt!
+// Імпортуйте їх: import com.example.financegame.ui.theme.TextPrimary
 
 val PrimaryBlue = Color(0xFF0EA5E9)
 val SecondaryGreen = Color(0xFF06B6D4)
 val AccentOrange = Color(0xFFFF9500)
 val AccentRed = Color(0xFFFF6B6B)
 
-// Статичні кольори (не змінюються)
+// Статичні кольори
 val TextLight = Color(0xFFFFFFFF)
 
 // Категорії витрат - яскравіші

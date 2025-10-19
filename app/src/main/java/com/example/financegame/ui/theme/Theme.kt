@@ -49,13 +49,13 @@ private fun getOceanDark() = darkColorScheme(
     background = OceanBreezeColors.BackgroundDark,
     surface = OceanBreezeColors.SurfaceDark,
     surfaceVariant = OceanBreezeColors.CardDark,
-    onPrimary = TextLight,
-    onSecondary = TextLight,
-    onBackground = Color(0xFFE0F2FE),
-    onSurface = Color(0xFFE0F2FE),
-    onSurfaceVariant = Color(0xFFBAE6FD),
+    onPrimary = Color(0xFFFFFFFF),
+    onSecondary = Color(0xFFE0F2FE),
+    onBackground = Color(0xFFE0F2FE),       // Світлий блакитний текст
+    onSurface = Color(0xFFBAE6FD),          // Яскравий блакитний текст
+    onSurfaceVariant = Color(0xFF7DD3FC),   // Середній блакитний для вторинного тексту
     error = OceanBreezeColors.Error,
-    onError = TextLight
+    onError = Color(0xFFFFFFFF)
 )
 
 // Sakura Dream

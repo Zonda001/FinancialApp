@@ -34,7 +34,6 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     init {
-        // Автоматична перевірка квестів при зміні витрат
         viewModelScope.launch {
             expenseRepository.getAllExpenses(1).collect {
                 checkAndUpdateQuestProgress()
@@ -54,7 +53,6 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun checkSaveMoneyQuest(quest: Quest) {
-        // Для квесту "Перший крок" - просто перевіряємо чи є хоча б одна витрата
         if (quest.title == "Перший крок") {
             expenseRepository.getAllExpenses(1).first().let { expenses ->
                 if (expenses.isNotEmpty() && !quest.isCompleted) {
@@ -136,7 +134,22 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     fun completeQuest(quest: Quest) {
         viewModelScope.launch {
             questRepository.completeQuest(quest.id)
-            userRepository.addExperience(1, quest.reward)
+
+            // ВИПРАВЛЕННЯ: Додаємо досвід через ProfileViewModel метод
+            userRepository.getCurrentUser().first()?.let { user ->
+                val newExp = user.experience + quest.reward
+                val newLevel = calculateLevel(newExp)
+                val newTotalPoints = user.totalPoints + quest.reward
+
+                userRepository.updateUser(
+                    user.copy(
+                        experience = newExp,
+                        level = newLevel,
+                        totalPoints = newTotalPoints
+                    )
+                )
+            }
+
             checkAndUpdateQuestProgress()
         }
     }
@@ -147,7 +160,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Нові квести "в один клік"
+    // Для квестів "в один клік"
     fun completeOneClickQuest(questId: Int) {
         viewModelScope.launch {
             activeQuests.value.find { it.id == questId }?.let { quest ->
@@ -155,5 +168,9 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
                 completeQuest(quest)
             }
         }
+    }
+
+    private fun calculateLevel(experience: Int): Int {
+        return (kotlin.math.sqrt(experience.toDouble() / 100.0)).toInt() + 1
     }
 }

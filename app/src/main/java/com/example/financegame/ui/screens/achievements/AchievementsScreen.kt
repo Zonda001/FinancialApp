@@ -3,6 +3,7 @@ package com.example.financegame.ui.screens.achievements
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,16 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.Achievement
 import com.example.financegame.data.local.database.entities.AchievementCategory
 import com.example.financegame.ui.theme.*
-import com.example.financegame.ui.theme.TextPrimary
-import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +37,7 @@ fun AchievementsScreen(
     val unlockedCount by viewModel.unlockedCount.collectAsState()
     val totalCount by viewModel.totalCount.collectAsState()
     var selectedCategory by remember { mutableStateOf<AchievementCategory?>(null) }
+    var selectedAchievement by remember { mutableStateOf<Achievement?>(null) }
 
     val filteredAchievements = remember(allAchievements, selectedCategory) {
         if (selectedCategory == null) {
@@ -63,7 +63,6 @@ fun AchievementsScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Статистика прогресу
             AchievementProgressCard(
                 unlocked = unlockedCount,
                 total = totalCount
@@ -71,7 +70,6 @@ fun AchievementsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Фільтри категорій
             CategoryFilters(
                 selectedCategory = selectedCategory,
                 onCategorySelected = { selectedCategory = it }
@@ -79,7 +77,6 @@ fun AchievementsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Сітка досягнень
             if (filteredAchievements.isEmpty()) {
                 EmptyAchievementsPlaceholder()
             } else {
@@ -91,11 +88,22 @@ fun AchievementsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(filteredAchievements, key = { it.id }) { achievement ->
-                        AchievementCard(achievement = achievement)
+                        AchievementCard(
+                            achievement = achievement,
+                            onClick = { selectedAchievement = achievement }
+                        )
                     }
                 }
             }
         }
+    }
+
+    // Діалог деталей досягнення
+    selectedAchievement?.let { achievement ->
+        AchievementDetailDialog(
+            achievement = achievement,
+            onDismiss = { selectedAchievement = null }
+        )
     }
 }
 
@@ -219,7 +227,7 @@ fun CategoryFilters(
 }
 
 @Composable
-fun AchievementCard(achievement: Achievement) {
+fun AchievementCard(achievement: Achievement, onClick: () -> Unit) {
     val scale by animateFloatAsState(
         targetValue = if (achievement.isUnlocked) 1f else 0.95f,
         animationSpec = spring(
@@ -233,7 +241,8 @@ fun AchievementCard(achievement: Achievement) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .scale(scale),
+            .scale(scale)
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (achievement.isUnlocked) {
                 MaterialTheme.colorScheme.surfaceVariant
@@ -254,7 +263,6 @@ fun AchievementCard(achievement: Achievement) {
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(16.dp)
             ) {
-                // Іконка досягнення
                 Box(
                     modifier = Modifier
                         .size(70.dp)
@@ -292,30 +300,18 @@ fun AchievementCard(achievement: Achievement) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Назва
                 Text(
                     achievement.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    color = if (achievement.isUnlocked) TextPrimary else TextSecondary
+                    color = if (achievement.isUnlocked) TextPrimary else TextSecondary,
+                    maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Опис
-                Text(
-                    achievement.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    color = TextSecondary,
-                    maxLines = 2
-                )
-
                 if (!achievement.isUnlocked) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Прогрес
                     LinearProgressIndicator(
                         progress = achievement.currentProgress.toFloat() / achievement.requirement.toFloat(),
                         modifier = Modifier
@@ -332,7 +328,6 @@ fun AchievementCard(achievement: Achievement) {
                         color = TextSecondary
                     )
                 } else {
-                    Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -350,6 +345,219 @@ fun AchievementCard(achievement: Achievement) {
                             fontWeight = FontWeight.SemiBold
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AchievementDetailDialog(
+    achievement: Achievement,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Іконка
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (achievement.isUnlocked) {
+                                Brush.linearGradient(
+                                    colors = listOf(GoldColor, AccentOrange)
+                                )
+                            } else {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (achievement.isUnlocked) {
+                        Text(
+                            achievement.icon,
+                            style = MaterialTheme.typography.displayLarge
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = TextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Назва
+                Text(
+                    achievement.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = if (achievement.isUnlocked) TextPrimary else TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Опис
+                Text(
+                    achievement.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Прогрес
+                if (!achievement.isUnlocked) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Прогрес",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "${achievement.currentProgress} / ${achievement.requirement}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryBlue
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            LinearProgressIndicator(
+                                progress = achievement.currentProgress.toFloat() / achievement.requirement.toFloat(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
+                                color = PrimaryBlue,
+                                trackColor = MaterialTheme.colorScheme.surface
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                "Залишилось: ${achievement.requirement - achievement.currentProgress}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                } else {
+                    // Статус відкрито
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = QuestCompletedColor.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = QuestCompletedColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Досягнення відкрито!",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = QuestCompletedColor
+                            )
+                        }
+                    }
+
+                    achievement.unlockedAt?.let { timestamp ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Відкрито: ${formatDate(timestamp)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Категорія
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        when (achievement.category) {
+                            AchievementCategory.GENERAL -> Icons.Default.Dashboard
+                            AchievementCategory.SAVINGS -> Icons.Default.Savings
+                            AchievementCategory.QUESTS -> Icons.Default.EmojiEvents
+                            AchievementCategory.STREAK -> Icons.Default.LocalFireDepartment
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        when (achievement.category) {
+                            AchievementCategory.GENERAL -> "Загальне"
+                            AchievementCategory.SAVINGS -> "Заощадження"
+                            AchievementCategory.QUESTS -> "Квести"
+                            AchievementCategory.STREAK -> "Серії"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Кнопка закрити
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Закрити")
                 }
             }
         }
@@ -379,4 +587,9 @@ fun EmptyAchievementsPlaceholder() {
             )
         }
     }
+}
+
+private fun formatDate(timestamp: Long): String {
+    val sdf = java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(timestamp))
 }

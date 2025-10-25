@@ -16,15 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.*
+import com.example.financegame.data.settings.SettingsDataStore
 import com.example.financegame.ui.theme.*
 import com.example.financegame.ui.theme.TextPrimary
 import com.example.financegame.ui.theme.TextSecondary
-import java.text.NumberFormat
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,6 +40,17 @@ fun ExpensesScreen(
     val monthExpenses by viewModel.currentMonthExpenses.collectAsState()
     val monthIncome by viewModel.currentMonthIncome.collectAsState()
     val showAddDialog by viewModel.showAddDialog.collectAsState()
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var currency by remember { mutableStateOf("грн") }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val settingsDataStore = SettingsDataStore(context)
+            currency = settingsDataStore.currencyFlow.first()
+        }
+    }
 
     val balance = monthIncome - monthExpenses
 
@@ -64,16 +78,15 @@ fun ExpensesScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Картка балансу
             BalanceCard(
                 income = monthIncome,
                 expenses = monthExpenses,
-                balance = balance
+                balance = balance,
+                currency = currency
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Список витрат
             if (expenses.isEmpty()) {
                 EmptyExpensesPlaceholder()
             } else {
@@ -85,6 +98,7 @@ fun ExpensesScreen(
                     items(expenses, key = { it.id }) { expense ->
                         ExpenseCard(
                             expense = expense,
+                            currency = currency,
                             onDelete = { viewModel.deleteExpense(expense) }
                         )
                     }
@@ -93,9 +107,9 @@ fun ExpensesScreen(
         }
     }
 
-    // Діалог додавання витрати
     if (showAddDialog) {
         AddExpenseDialog(
+            currency = currency,
             onDismiss = { viewModel.hideAddExpenseDialog() },
             onConfirm = { amount, category, type, description ->
                 viewModel.addExpense(amount, category, type, description)
@@ -105,7 +119,7 @@ fun ExpensesScreen(
 }
 
 @Composable
-fun BalanceCard(income: Double, expenses: Double, balance: Double) {
+fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,7 +147,7 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    formatCurrency(balance),
+                    formatCurrency(balance, currency),
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = TextLight
@@ -159,7 +173,7 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double) {
                             )
                         }
                         Text(
-                            formatCurrency(income),
+                            formatCurrency(income, currency),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = TextLight
@@ -181,7 +195,7 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double) {
                             )
                         }
                         Text(
-                            formatCurrency(expenses),
+                            formatCurrency(expenses, currency),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = TextLight
@@ -194,7 +208,7 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double) {
 }
 
 @Composable
-fun ExpenseCard(expense: Expense, onDelete: () -> Unit) {
+fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val categoryColor = getCategoryColor(expense.category)
 
@@ -214,7 +228,6 @@ fun ExpenseCard(expense: Expense, onDelete: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Іконка категорії
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -253,7 +266,7 @@ fun ExpenseCard(expense: Expense, onDelete: () -> Unit) {
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    "${if (expense.type == ExpenseType.EXPENSE) "-" else "+"} ${formatCurrency(expense.amount)}",
+                    "${if (expense.type == ExpenseType.EXPENSE) "-" else "+"} ${formatCurrency(expense.amount, currency)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (expense.type == ExpenseType.EXPENSE) AccentRed else QuestActiveColor
@@ -331,6 +344,7 @@ fun EmptyExpensesPlaceholder() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseDialog(
+    currency: String,
     onDismiss: () -> Unit,
     onConfirm: (Double, String, ExpenseType, String) -> Unit
 ) {
@@ -360,7 +374,6 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Тип транзакції
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -387,11 +400,10 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Сума
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text("Сума (грн)") },
+                    label = { Text("Сума ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -399,7 +411,6 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Категорія
                 ExposedDropdownMenuBox(
                     expanded = showCategoryMenu,
                     onExpandedChange = { showCategoryMenu = it }
@@ -438,7 +449,6 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Опис
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -449,7 +459,6 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Кнопки
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -475,9 +484,8 @@ fun AddExpenseDialog(
     }
 }
 
-// Допоміжні функції
-fun formatCurrency(amount: Double): String {
-    return String.format("%.2f грн", amount)
+fun formatCurrency(amount: Double, currency: String): String {
+    return String.format("%.2f %s", amount, currency)
 }
 
 fun formatDate(timestamp: Long): String {

@@ -15,15 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.financegame.ui.screens.expenses.formatCurrency
+import com.example.financegame.data.settings.SettingsDataStore
 import com.example.financegame.ui.screens.expenses.getCategoryColor
 import com.example.financegame.ui.screens.expenses.getCategoryIcon
 import com.example.financegame.ui.theme.*
 import com.example.financegame.ui.theme.TextPrimary
 import com.example.financegame.ui.theme.TextSecondary
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +36,17 @@ fun ReportsScreen(
     val selectedPeriod by viewModel.selectedPeriod.collectAsState()
     val periodReport by viewModel.periodReport.collectAsState()
     val expenses by viewModel.expensesForPeriod.collectAsState()
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var currency by remember { mutableStateOf("грн") }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val settingsDataStore = SettingsDataStore(context)
+            currency = settingsDataStore.currencyFlow.first()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -52,7 +66,6 @@ fun ReportsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Вибір періоду
             item {
                 PeriodSelector(
                     selectedPeriod = selectedPeriod,
@@ -61,12 +74,10 @@ fun ReportsScreen(
             }
 
             periodReport?.let { report ->
-                // Загальна статистика
                 item {
-                    OverallStatsCard(report = report)
+                    OverallStatsCard(report = report, currency = currency)
                 }
 
-                // Розбивка по категоріях
                 if (report.categoryBreakdown.isNotEmpty()) {
                     item {
                         Text(
@@ -80,7 +91,8 @@ fun ReportsScreen(
                     items(report.categoryBreakdown) { categoryExpense ->
                         CategoryExpenseCard(
                             categoryExpense = categoryExpense,
-                            totalExpenses = report.totalExpenses
+                            totalExpenses = report.totalExpenses,
+                            currency = currency
                         )
                     }
                 } else {
@@ -89,11 +101,11 @@ fun ReportsScreen(
                     }
                 }
 
-                // Додаткова статистика
                 item {
                     AdditionalStatsCard(
                         dailyAverage = report.dailyAverage,
-                        transactionCount = expenses.size
+                        transactionCount = expenses.size,
+                        currency = currency
                     )
                 }
             } ?: item {
@@ -140,7 +152,7 @@ fun PeriodSelector(
 }
 
 @Composable
-fun OverallStatsCard(report: PeriodReport) {
+fun OverallStatsCard(report: PeriodReport, currency: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -157,7 +169,6 @@ fun OverallStatsCard(report: PeriodReport) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Баланс
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,7 +181,7 @@ fun OverallStatsCard(report: PeriodReport) {
                         color = TextSecondary
                     )
                     Text(
-                        formatCurrency(report.balance),
+                        formatCurrency(report.balance, currency),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (report.balance >= 0) QuestActiveColor else AccentRed
@@ -189,14 +200,13 @@ fun OverallStatsCard(report: PeriodReport) {
             Divider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Доходи та витрати
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatColumn(
                     title = "Доходи",
-                    value = formatCurrency(report.totalIncome),
+                    value = formatCurrency(report.totalIncome, currency),
                     icon = Icons.Default.ArrowUpward,
                     color = QuestActiveColor
                 )
@@ -208,7 +218,7 @@ fun OverallStatsCard(report: PeriodReport) {
 
                 StatColumn(
                     title = "Витрати",
-                    value = formatCurrency(report.totalExpenses),
+                    value = formatCurrency(report.totalExpenses, currency),
                     icon = Icons.Default.ArrowDownward,
                     color = AccentRed
                 )
@@ -251,7 +261,8 @@ fun StatColumn(
 @Composable
 fun CategoryExpenseCard(
     categoryExpense: CategoryExpense,
-    totalExpenses: Double
+    totalExpenses: Double,
+    currency: String
 ) {
     val categoryColor = getCategoryColor(categoryExpense.category)
 
@@ -271,7 +282,6 @@ fun CategoryExpenseCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Іконка категорії
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -301,7 +311,6 @@ fun CategoryExpenseCard(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Прогрес бар
                     LinearProgressIndicator(
                         progress = categoryExpense.percentage / 100f,
                         modifier = Modifier
@@ -317,7 +326,7 @@ fun CategoryExpenseCard(
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                formatCurrency(categoryExpense.amount),
+                formatCurrency(categoryExpense.amount, currency),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = categoryColor
@@ -329,7 +338,8 @@ fun CategoryExpenseCard(
 @Composable
 fun AdditionalStatsCard(
     dailyAverage: Double,
-    transactionCount: Int
+    transactionCount: Int,
+    currency: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -358,7 +368,7 @@ fun AdditionalStatsCard(
                         color = TextSecondary
                     )
                     Text(
-                        formatCurrency(dailyAverage),
+                        formatCurrency(dailyAverage, currency),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = AccentOrange
@@ -413,4 +423,8 @@ fun EmptyReportPlaceholder() {
             )
         }
     }
+}
+
+private fun formatCurrency(amount: Double, currency: String): String {
+    return String.format("%.2f %s", amount, currency)
 }

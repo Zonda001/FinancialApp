@@ -26,6 +26,8 @@ import kotlinx.coroutines.launch
 class MainActivity : FragmentActivity() {
     private lateinit var biometricAuthManager: BiometricAuthManager
     private lateinit var database: AppDatabase
+    private lateinit var settingsViewModel: SettingsViewModel
+
     private var isAuthenticated = mutableStateOf(false)
     private var isRegistered = mutableStateOf(false)
     private var needsBiometric = mutableStateOf(false)
@@ -35,16 +37,14 @@ class MainActivity : FragmentActivity() {
 
         biometricAuthManager = BiometricAuthManager(this)
         database = AppDatabase.getDatabase(this)
-        val settingsViewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
+        settingsViewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
 
-        // Перевіряємо чи користувач зареєстрований
         lifecycleScope.launch {
             val user = database.userDao().getCurrentUser().first()
 
             if (user != null) {
                 isRegistered.value = true
 
-                // Перевіряємо чи увімкнена біометрія
                 val biometricEnabled = settingsViewModel.biometricEnabled.first()
 
                 if (biometricEnabled && biometricAuthManager.isBiometricAvailable()) {
@@ -54,7 +54,6 @@ class MainActivity : FragmentActivity() {
                     isAuthenticated.value = true
                 }
             } else {
-                // Користувач не зареєстрований
                 isRegistered.value = false
                 isAuthenticated.value = false
             }
@@ -79,12 +78,10 @@ class MainActivity : FragmentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     when {
-                        // Якщо не зареєстрований - показуємо реєстрацію
                         !isRegistered.value -> {
                             RegistrationScreen(
-                                onRegistrationComplete = { nickname, avatar, password ->
+                                onRegistrationComplete = { nickname, avatar, password, useBiometric ->
                                     lifecycleScope.launch {
-                                        // Створюємо користувача
                                         database.userDao().insertUser(
                                             User(
                                                 id = 1,
@@ -96,14 +93,16 @@ class MainActivity : FragmentActivity() {
                                                 totalPoints = 0
                                             )
                                         )
-                                        // TODO: Зберегти пароль безпечно
+
+                                        // Зберігаємо налаштування біометрії
+                                        settingsViewModel.setBiometricEnabled(useBiometric)
+
                                         isRegistered.value = true
                                         isAuthenticated.value = true
                                     }
                                 },
                                 onGuestMode = {
                                     lifecycleScope.launch {
-                                        // Створюємо гостьового користувача
                                         database.userDao().insertUser(
                                             User(
                                                 id = 1,
@@ -118,10 +117,11 @@ class MainActivity : FragmentActivity() {
                                         isRegistered.value = true
                                         isAuthenticated.value = true
                                     }
-                                }
+                                },
+                                biometricAvailable = biometricAuthManager.isBiometricAvailable()
                             )
                         }
-                        // Якщо потрібна біометрія - показуємо екран автентифікації
+
                         needsBiometric.value && !isAuthenticated.value -> {
                             BiometricAuthScreen(
                                 onAuthenticate = {
@@ -130,17 +130,17 @@ class MainActivity : FragmentActivity() {
                                         onSuccess = {
                                             isAuthenticated.value = true
                                         },
-                                        onError = { error ->
-                                            // Показуємо помилку
+                                        onError = { _ ->
+                                            // Тут можна додати Toast або лог
                                         },
                                         onFailed = {
-                                            // Автентифікація не вдалась
+                                            // Автентифікація не вдалася
                                         }
                                     )
                                 }
                             )
                         }
-                        // Якщо все ОК - показуємо головний екран
+
                         else -> {
                             MainScreen(settingsViewModel = settingsViewModel)
                         }

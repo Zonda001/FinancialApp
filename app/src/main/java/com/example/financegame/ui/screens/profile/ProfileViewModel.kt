@@ -55,11 +55,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             currentUser.value?.let { user ->
                 val newExp = user.experience + points
                 val newLevel = calculateLevel(newExp)
+                val newTotalPoints = user.totalPoints + points
 
-                userRepository.addExperience(user.id, points)
-                if (newLevel > user.level) {
-                    userRepository.updateLevel(user.id, newLevel)
-                }
+                // ВИПРАВЛЕННЯ: Оновлюємо все разом
+                userRepository.updateUser(
+                    user.copy(
+                        experience = newExp,
+                        level = newLevel,
+                        totalPoints = newTotalPoints
+                    )
+                )
             }
         }
     }

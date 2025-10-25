@@ -59,17 +59,21 @@ fun ExpensesScreen(
             TopAppBar(
                 title = { Text("Мої витрати", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = TextLight
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.showAddExpenseDialog() },
-                containerColor = AccentOrange
+                containerColor = MaterialTheme.colorScheme.tertiary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Додати витрату", tint = TextLight)
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Додати витрату",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
     ) { padding ->
@@ -134,7 +138,10 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: Str
                 .fillMaxWidth()
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(PrimaryBlue, SecondaryGreen)
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 )
                 .padding(20.dp)
@@ -143,14 +150,14 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: Str
                 Text(
                     "Баланс цього місяця",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextLight.copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     formatCurrency(balance, currency),
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
-                    color = TextLight
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(

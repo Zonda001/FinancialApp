@@ -125,7 +125,10 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                 .fillMaxWidth()
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(GoldColor, AccentOrange)
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 )
                 .padding(20.dp)
@@ -140,14 +143,14 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                         Text(
                             "Твій прогрес",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextLight.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "$unlocked / $total",
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextLight
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
 
@@ -155,7 +158,7 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                         Icons.Default.MilitaryTech,
                         contentDescription = null,
                         modifier = Modifier.size(60.dp),
-                        tint = TextLight.copy(alpha = 0.8f)
+                        tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
                 }
 
@@ -167,8 +170,8 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                         .fillMaxWidth()
                         .height(10.dp)
                         .clip(RoundedCornerShape(5.dp)),
-                    color = TextLight,
-                    trackColor = TextLight.copy(alpha = 0.3f)
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    trackColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -176,7 +179,7 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                 Text(
                     "${(progress * 100).toInt()}% виконано",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextLight.copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                 )
             }
         }

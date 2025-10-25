@@ -47,8 +47,8 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text("Налаштування", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = TextLight
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -272,7 +272,7 @@ fun SettingsSectionHeader(title: String, icon: ImageVector) {
         Icon(
             icon,
             contentDescription = null,
-            tint = PrimaryBlue,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -280,7 +280,7 @@ fun SettingsSectionHeader(title: String, icon: ImageVector) {
             title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = PrimaryBlue
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -315,7 +315,7 @@ fun SettingsItem(
         Icon(
             icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -356,7 +356,7 @@ fun SettingsSwitchItem(
         Icon(
             icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -478,6 +478,7 @@ fun ColorThemeSelectionDialog(
                                         AppTheme.ICE -> "Чистий та освіжаючий"
                                         AppTheme.LAVA -> "Енергійний та яскравий"
                                         AppTheme.MOONLIGHT -> "М'який та спокійний"
+                                        AppTheme.MONOCHROME -> "Мінімалістичний та стильний"  // НОВИЙ РЯДОК
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary

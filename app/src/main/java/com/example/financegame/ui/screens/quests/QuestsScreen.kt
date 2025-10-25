@@ -42,8 +42,11 @@ fun QuestsScreen(
                 ),
                 actions = {
                     IconButton(onClick = { viewModel.refreshQuests() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Оновити",
-                            tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Оновити",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 }
             )
@@ -58,17 +61,21 @@ fun QuestsScreen(
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = PrimaryBlue
+                contentColor = MaterialTheme.colorScheme.primary
             ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Активні (${activeQuests.size})") }
+                    text = { Text("Активні (${activeQuests.size})") },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.background
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Завершені (${completedQuests.size})") }
+                    text = { Text("Завершені (${completedQuests.size})") },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.background
                 )
             }
 

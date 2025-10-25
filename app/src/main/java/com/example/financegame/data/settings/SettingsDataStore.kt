@@ -127,5 +127,7 @@ enum class AppTheme(val displayName: String, val emoji: String) {
     MIDNIGHT("Midnight Purple", "🌌"),
     ICE("Ice Crystal", "❄️"),
     LAVA("Lava Flow", "🔥"),
-    MOONLIGHT("Moonlight", "🌙")
+    MOONLIGHT("Moonlight", "🌙"),
+
+    MONOCHROME("Monochrome", "⚫")
 }

@@ -155,6 +155,25 @@ object MoonlightColors {
     val CardDark = Color(0xFF4F46E5)
 }
 
+// ⚫ MONOCHROME - Чорно-біла тема
+object MonochromeColors {
+    val Primary = Color(0xFFFFFFFF)        // Білий
+    val Secondary = Color(0xFFE0E0E0)      // Світло-сірий
+    val Accent = Color(0xFFBDBDBD)         // Сірий
+    val Success = Color(0xFFE0E0E0)        // Світло-сірий
+    val Error = Color(0xFFFFFFFF)          // Білий
+
+    // Світла тема - білий фон
+    val BackgroundLight = Color(0xFFFFFFFF)
+    val SurfaceLight = Color(0xFFF5F5F5)
+    val CardLight = Color(0xFFEEEEEE)
+
+    // Темна тема - чорний фон
+    val BackgroundDark = Color(0xFF000000)     // Чистий чорний
+    val SurfaceDark = Color(0xFF121212)        // Темно-сірий
+    val CardDark = Color(0xFF1E1E1E)           // Сірий
+}
+
 // ======================== ЗАГАЛЬНІ КОЛЬОРИ ========================
 // УВАГА: TextPrimary та TextSecondary тепер в ThemeHelpers.kt!
 // Імпортуйте їх: import com.example.financegame.ui.theme.TextPrimary

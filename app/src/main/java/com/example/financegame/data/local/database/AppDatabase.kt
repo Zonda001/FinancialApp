@@ -77,7 +77,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "Перший крок",
                     description = "Додай свою першу витрату",
-                    reward = 50,
+                    reward = 100,  // Збільшено з 50 до 100
                     questType = QuestType.SAVE_MONEY
                 ),
                 Quest(
@@ -101,7 +101,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "🎯 Швидкий старт",
                     description = "Натисни щоб отримати перші 25 балів!",
-                    reward = 25,
+                    reward = 50,  // Збільшено з 25 до 50
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
@@ -109,7 +109,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "📊 Переглянь статистику",
                     description = "Відкрий розділ звітів (просто натисни кнопку)",
-                    reward = 30,
+                    reward = 50,  // Збільшено з 30 до 50
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
@@ -117,7 +117,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "⚙️ Налаштуй тему",
                     description = "Зайди в налаштування і вибери кольорову тему",
-                    reward = 40,
+                    reward = 50,  // Збільшено з 40 до 50
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
@@ -125,7 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "🏆 Переглянь досягнення",
                     description = "Відкрий розділ досягнень",
-                    reward = 35,
+                    reward = 50,  // Збільшено з 35 до 50
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
@@ -133,7 +133,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Quest(
                     title = "💪 Щоденна мотивація",
                     description = "Отримай бонус просто за відвідування додатку",
-                    reward = 20,
+                    reward = 50,  // Збільшено з 20 до 50
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false

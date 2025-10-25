@@ -37,6 +37,19 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateUserProfile(newName: String, newAvatar: String) {
+        viewModelScope.launch {
+            currentUser.value?.let { user ->
+                userRepository.updateUser(
+                    user.copy(
+                        name = newName,
+                        avatarUrl = newAvatar
+                    )
+                )
+            }
+        }
+    }
+
     fun addExperience(points: Int) {
         viewModelScope.launch {
             currentUser.value?.let { user ->
@@ -58,6 +71,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun getExperienceForNextLevel(currentExp: Int, currentLevel: Int): Int {
         val nextLevelExp = (currentLevel * currentLevel) * 100
-        return nextLevelExp - currentExp
+        return (nextLevelExp - currentExp).coerceAtLeast(0)
     }
 }

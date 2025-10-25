@@ -42,7 +42,8 @@ fun QuestsScreen(
                 ),
                 actions = {
                     IconButton(onClick = { viewModel.refreshQuests() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Оновити", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Default.Refresh, contentDescription = "Оновити",
+                            tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )
@@ -85,7 +86,10 @@ fun QuestsScreen(
                             items(activeQuests, key = { it.id }) { quest ->
                                 QuestCard(
                                     quest = quest,
-                                    onComplete = { viewModel.completeQuest(quest) }
+                                    onComplete = { viewModel.completeQuest(quest) },
+                                    onOneClick = { questId ->
+                                        viewModel.completeOneClickQuest(questId)
+                                    }
                                 )
                             }
                         }
@@ -112,7 +116,14 @@ fun QuestsScreen(
 }
 
 @Composable
-fun QuestCard(quest: Quest, onComplete: () -> Unit) {
+fun QuestCard(quest: Quest, onComplete: () -> Unit, onOneClick: (Int) -> Unit) {
+    // Перевіряємо чи це квест "в один клік"
+    val isOneClickQuest = quest.title.contains("🎯") ||
+            quest.title.contains("📊") ||
+            quest.title.contains("⚙️") ||
+            quest.title.contains("🏆") ||
+            quest.title.contains("💪")
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -131,9 +142,9 @@ fun QuestCard(quest: Quest, onComplete: () -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            getQuestIcon(quest.questType),
+                            if (isOneClickQuest) Icons.Default.TouchApp else getQuestIcon(quest.questType),
                             contentDescription = null,
-                            tint = QuestActiveColor,
+                            tint = if (isOneClickQuest) GoldColor else QuestActiveColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -177,51 +188,66 @@ fun QuestCard(quest: Quest, onComplete: () -> Unit) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Прогрес бар
-            Column {
-                Row(
+            // Для квестів "в один клік" показуємо кнопку одразу
+            if (isOneClickQuest) {
+                Button(
+                    onClick = { onOneClick(quest.id) },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        "Прогрес",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldColor
                     )
-                    Text(
-                        "${(quest.progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = QuestActiveColor
+                ) {
+                    Icon(Icons.Default.TouchApp, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Виконати зараз!", color = TextPrimary)
+                }
+            } else {
+                // Для звичайних квестів показуємо прогрес
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Прогрес",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Text(
+                            "${(quest.progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = QuestActiveColor
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LinearProgressIndicator(
+                        progress = quest.progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = QuestActiveColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                LinearProgressIndicator(
-                    progress = quest.progress,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = QuestActiveColor,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            }
-
-            // Кнопка завершення (якщо прогрес 100%)
-            if (quest.progress >= 1f) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = onComplete,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = QuestCompletedColor
-                    )
-                ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Отримати нагороду!")
+                // Кнопка завершення (якщо прогрес 100%)
+                if (quest.progress >= 1f) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onComplete,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = QuestCompletedColor
+                        )
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Отримати нагороду!")
+                    }
                 }
             }
         }

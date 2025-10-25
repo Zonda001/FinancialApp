@@ -11,7 +11,7 @@ import com.example.financegame.data.repository.UserRepository
 import com.example.financegame.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Calendar
 
 class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)

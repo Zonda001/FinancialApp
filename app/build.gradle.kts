@@ -75,8 +75,14 @@ dependencies {
     // DataStore для збереження налаштувань
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    // *** ДОДАНО: Біометрична автентифікація ***
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
     // Charts для графіків (для майбутнього розширення)
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
     // Gson для роботи з JSON
     implementation("com.google.code.gson:gson:2.10.1")

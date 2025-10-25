@@ -73,6 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
 
             // Додаємо стартові квести
             val startQuests = listOf(
+                // Існуючі квести
                 Quest(
                     title = "Перший крок",
                     description = "Додай свою першу витрату",
@@ -94,6 +95,48 @@ abstract class AppDatabase : RoomDatabase() {
                     targetDays = 7,
                     reward = 200,
                     questType = QuestType.NO_SPENDING
+                ),
+
+                // НОВІ КВЕСТИ "В ОДИН КЛІК"
+                Quest(
+                    title = "🎯 Швидкий старт",
+                    description = "Натисни щоб отримати перші 25 балів!",
+                    reward = 25,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+                Quest(
+                    title = "📊 Переглянь статистику",
+                    description = "Відкрий розділ звітів (просто натисни кнопку)",
+                    reward = 30,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+                Quest(
+                    title = "⚙️ Налаштуй тему",
+                    description = "Зайди в налаштування і вибери кольорову тему",
+                    reward = 40,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+                Quest(
+                    title = "🏆 Переглянь досягнення",
+                    description = "Відкрий розділ досягнень",
+                    reward = 35,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+                Quest(
+                    title = "💪 Щоденна мотивація",
+                    description = "Отримай бонус просто за відвідування додатку",
+                    reward = 20,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
                 )
             )
             startQuests.forEach { questDao.insertQuest(it) }

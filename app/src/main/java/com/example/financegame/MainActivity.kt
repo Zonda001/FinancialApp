@@ -20,7 +20,7 @@ import com.example.financegame.util.BiometricAuthManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private lateinit var biometricAuthManager: BiometricAuthManager
     private var isAuthenticated = mutableStateOf(false)
 

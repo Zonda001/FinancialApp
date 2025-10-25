@@ -34,9 +34,11 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     init {
-        // Автоматична перевірка квестів при завантаженні
+        // Автоматична перевірка квестів при зміні витрат
         viewModelScope.launch {
-            checkAndUpdateQuestProgress()
+            expenseRepository.getAllExpenses(1).collect {
+                checkAndUpdateQuestProgress()
+            }
         }
     }
 
@@ -52,8 +54,18 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun checkSaveMoneyQuest(quest: Quest) {
-        val endTime = quest.startDate + (quest.targetDays * 24 * 60 * 60 * 1000L)
+        // Для квесту "Перший крок" - просто перевіряємо чи є хоча б одна витрата
+        if (quest.title == "Перший крок") {
+            expenseRepository.getAllExpenses(1).first().let { expenses ->
+                if (expenses.isNotEmpty() && !quest.isCompleted) {
+                    questRepository.updateQuestProgress(quest.id, 1f)
+                    completeQuest(quest)
+                }
+            }
+            return
+        }
 
+        val endTime = quest.startDate + (quest.targetDays * 24 * 60 * 60 * 1000L)
         expenseRepository.getTotalExpenses(1, quest.startDate, endTime).firstOrNull()?.let { total ->
             val saved = quest.targetAmount - (total ?: 0.0)
             val progress = (saved / quest.targetAmount).toFloat().coerceIn(0f, 1f)
@@ -89,7 +101,6 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun checkWeeklyGoalQuest(quest: Quest) {
         val endTime = quest.startDate + (quest.targetDays * 24 * 60 * 60 * 1000L)
-
         expenseRepository.getTotalExpenses(1, quest.startDate, endTime).firstOrNull()?.let { total ->
             val progress = if (total != null && total <= quest.targetAmount) {
                 1f
@@ -125,10 +136,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     fun completeQuest(quest: Quest) {
         viewModelScope.launch {
             questRepository.completeQuest(quest.id)
-            // Додаємо досвід і бали за виконання квесту
             userRepository.addExperience(1, quest.reward)
-
-            // Перевіряємо квести знову після виконання
             checkAndUpdateQuestProgress()
         }
     }
@@ -136,6 +144,16 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshQuests() {
         viewModelScope.launch {
             checkAndUpdateQuestProgress()
+        }
+    }
+
+    // Нові квести "в один клік"
+    fun completeOneClickQuest(questId: Int) {
+        viewModelScope.launch {
+            activeQuests.value.find { it.id == questId }?.let { quest ->
+                questRepository.updateQuestProgress(quest.id, 1f)
+                completeQuest(quest)
+            }
         }
     }
 }

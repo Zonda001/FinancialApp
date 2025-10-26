@@ -173,17 +173,6 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Підказка (тільки для розробки)
-            if (savedPassword.isNotEmpty()) {
-                Text(
-                    "Підказка: ваш пароль '$savedPassword'",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextLight.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }

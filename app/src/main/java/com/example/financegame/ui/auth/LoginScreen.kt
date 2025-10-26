@@ -50,7 +50,7 @@ fun LoginScreen(
                 Icons.Default.Savings,
                 contentDescription = null,
                 modifier = Modifier.size(120.dp),
-                tint = TextLight
+                tint = MaterialTheme.colorScheme.onPrimary
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -59,7 +59,7 @@ fun LoginScreen(
                 "Finance Game",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextLight
+                color = MaterialTheme.colorScheme.onPrimary
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -67,7 +67,7 @@ fun LoginScreen(
             Text(
                 "Введіть пароль для входу",
                 style = MaterialTheme.typography.titleLarge,
-                color = TextLight.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
 
@@ -80,27 +80,28 @@ fun LoginScreen(
                     password = it
                     errorMessage = ""
                 },
-                label = { Text("Пароль", color = TextLight.copy(alpha = 0.7f)) },
-                leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextLight) },
+                label = { Text("Пароль", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)) },
+                leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onPrimary) },
                 trailingIcon = {
                     IconButton(onClick = { showPassword = !showPassword }) {
                         Icon(
                             if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             null,
-                            tint = TextLight
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = TextLight,
-                    unfocusedTextColor = TextLight,
-                    focusedBorderColor = TextLight,
-                    unfocusedBorderColor = TextLight.copy(alpha = 0.5f),
-                    cursorColor = TextLight,
-                    errorBorderColor = AccentRed,
-                    errorTextColor = TextLight
+                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                    focusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                    cursorColor = MaterialTheme.colorScheme.onPrimary,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                    errorTextColor = MaterialTheme.colorScheme.onPrimary,
+                    errorCursorColor = MaterialTheme.colorScheme.error
                 ),
                 singleLine = true,
                 isError = errorMessage.isNotEmpty()
@@ -110,7 +111,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     errorMessage,
-                    color = AccentRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -133,7 +134,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TextLight,
+                    containerColor = MaterialTheme.colorScheme.onPrimary,
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
@@ -156,11 +157,16 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = TextLight
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     border = ButtonDefaults.outlinedButtonBorder.copy(
                         width = 2.dp,
-                        brush = Brush.linearGradient(listOf(TextLight, TextLight))
+                        brush = Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.onPrimary,
+                                MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
                     )
                 ) {
                     Icon(Icons.Default.Fingerprint, contentDescription = null)

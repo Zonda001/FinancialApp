@@ -93,18 +93,21 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Ім'я користувача
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = currentUser.name,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+
                     IconButton(
                         onClick = { showEditDialog = true },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier
+                            .size(32.dp)
+                            .align(Alignment.CenterEnd)
                     ) {
                         Icon(
                             Icons.Default.Edit,
@@ -151,25 +154,28 @@ fun ProfileScreen(
                 // Статистика
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StatCard(
                         title = "Досвід",
                         value = currentUser.experience.toString(),
                         icon = Icons.Default.EmojiEvents,
-                        color = ExperienceColor
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Бали",
                         value = currentUser.totalPoints.toString(),
                         icon = Icons.Default.Stars,
-                        color = GoldColor
+                        color = GoldColor,
+                        modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Досягнення",
                         value = "$achievementsCount",
                         icon = Icons.Default.MilitaryTech,
-                        color = AccentOrange
+                        color = AccentOrange,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -226,14 +232,14 @@ fun ExperienceProgressCard(
                         "$expForNextLevel XP",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = ExperienceColor
+                        color = TextSecondary
                     )
                 }
 
                 Icon(
                     Icons.Default.TrendingUp,
                     contentDescription = null,
-                    tint = ExperienceColor,
+                    tint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -255,7 +261,7 @@ fun ExperienceProgressCard(
                         .clip(RoundedCornerShape(6.dp))
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(ExperienceColor, MaterialTheme.colorScheme.primary)
+                                colors = listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.primary)
                             )
                         )
                 )
@@ -284,7 +290,7 @@ fun ExperienceProgressCard(
             Text(
                 "${(progress * 100).toInt()}% до рівня ${level + 1}",
                 style = MaterialTheme.typography.bodySmall,
-                color = ExperienceColor,
+                color = TextSecondary,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -296,12 +302,12 @@ fun StatCard(
     title: String,
     value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    color: androidx.compose.ui.graphics.Color
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
-            .width(100.dp)
-            .height(100.dp),
+        modifier = modifier
+            .height(110.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -316,18 +322,20 @@ fun StatCard(
                 icon,
                 contentDescription = title,
                 tint = color,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(28.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             Text(
                 title,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                color = TextSecondary,
+                maxLines = 1
             )
         }
     }

@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,7 +64,7 @@ fun ReportsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -84,7 +85,7 @@ fun ReportsScreen(
                             "Витрати по категоріях",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
 
@@ -92,7 +93,8 @@ fun ReportsScreen(
                         CategoryExpenseCard(
                             categoryExpense = categoryExpense,
                             totalExpenses = report.totalExpenses,
-                            currency = currency
+                            currency = currency,
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
                 } else {
@@ -120,32 +122,46 @@ fun PeriodSelector(
     selectedPeriod: ReportPeriod,
     onPeriodSelected: (ReportPeriod) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(2.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Text(
+            "Період",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                "Період",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ReportPeriod.values().forEach { period ->
-                    FilterChip(
-                        selected = selectedPeriod == period,
-                        onClick = { onPeriodSelected(period) },
-                        label = { Text(period.displayName) },
-                        modifier = Modifier.weight(1f)
+            items(ReportPeriod.values()) { period ->
+                FilterChip(
+                    selected = selectedPeriod == period,
+                    onClick = { onPeriodSelected(period) },
+                    label = {
+                        Text(
+                            period.displayName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = if (selectedPeriod == period) {
+                        {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    } else null,
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
                     )
-                }
+                )
             }
         }
     }
@@ -154,7 +170,9 @@ fun PeriodSelector(
 @Composable
 fun OverallStatsCard(report: PeriodReport, currency: String) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
@@ -262,12 +280,13 @@ fun StatColumn(
 fun CategoryExpenseCard(
     categoryExpense: CategoryExpense,
     totalExpenses: Double,
-    currency: String
+    currency: String,
+    modifier: Modifier = Modifier
 ) {
     val categoryColor = getCategoryColor(categoryExpense.category)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -342,7 +361,9 @@ fun AdditionalStatsCard(
     currency: String
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {

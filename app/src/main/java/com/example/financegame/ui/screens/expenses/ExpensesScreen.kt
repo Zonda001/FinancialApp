@@ -40,6 +40,8 @@ fun ExpensesScreen(
     val monthExpenses by viewModel.currentMonthExpenses.collectAsState()
     val monthIncome by viewModel.currentMonthIncome.collectAsState()
     val showAddDialog by viewModel.showAddDialog.collectAsState()
+    val expenseLimit by viewModel.expenseLimit.collectAsState()
+    var showLimitDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -89,6 +91,16 @@ fun ExpensesScreen(
                 currency = currency
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Карта лімітів витрат
+            ExpenseLimitCard(
+                currentExpenses = monthExpenses,
+                expenseLimit = expenseLimit,
+                currency = currency,
+                onSetLimit = { showLimitDialog = true }
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             if (expenses.isEmpty()) {
@@ -120,6 +132,256 @@ fun ExpensesScreen(
             }
         )
     }
+
+    if (showLimitDialog) {
+        SetExpenseLimitDialog(
+            currentLimit = expenseLimit,
+            currency = currency,
+            onDismiss = { showLimitDialog = false },
+            onConfirm = { newLimit ->
+                viewModel.setExpenseLimit(newLimit)
+                showLimitDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun ExpenseLimitCard(
+    currentExpenses: Double,
+    expenseLimit: Double,
+    currency: String,
+    onSetLimit: () -> Unit
+) {
+    val progress = if (expenseLimit > 0) {
+        (currentExpenses / expenseLimit).toFloat().coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+
+    val progressColor = when {
+        progress < 0.5f -> MaterialTheme.colorScheme.tertiary
+        progress < 0.75f -> MaterialTheme.colorScheme.secondary
+        progress < 0.9f -> AccentOrange
+        else -> MaterialTheme.colorScheme.error
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable { onSetLimit() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = progressColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Ліміт витрат",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (expenseLimit > 0) {
+                        Text(
+                            "${formatCurrency(currentExpenses, currency)} з ${formatCurrency(expenseLimit, currency)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                    } else {
+                        Text(
+                            "Натисніть щоб встановити",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onSetLimit,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Змінити ліміт",
+                        tint = TextSecondary
+                    )
+                }
+            }
+
+            if (expenseLimit > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Прогрес бар
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        progressColor,
+                                        progressColor.copy(alpha = 0.7f)
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "${(progress * 100).toInt()}% використано",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    if (expenseLimit > currentExpenses) {
+                        Text(
+                            "Залишилось: ${formatCurrency(expenseLimit - currentExpenses, currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    } else {
+                        Text(
+                            "Перевищено на ${formatCurrency(currentExpenses - expenseLimit, currency)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SetExpenseLimitDialog(
+    currentLimit: Double,
+    currency: String,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    var limitText by remember {
+        mutableStateOf(if (currentLimit > 0) currentLimit.toInt().toString() else "")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.TrendingUp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Встановити ліміт витрат",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    "Вкажіть максимальну суму витрат на місяць. Прогрес бар допоможе контролювати ваші витрати.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = limitText,
+                    onValueChange = { limitText = it },
+                    label = { Text("Ліміт ($currency)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.MonetizationOn, contentDescription = null)
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    "💡 Підказка: встановіть реалістичний ліміт відповідно до ваших доходів",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary.copy(alpha = 0.7f)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val limit = limitText.toDoubleOrNull()
+                    if (limit != null && limit > 0) {
+                        onConfirm(limit)
+                    }
+                },
+                enabled = limitText.toDoubleOrNull() != null && limitText.toDoubleOrNull()!! > 0
+            ) {
+                Text("Зберегти")
+            }
+        },
+        dismissButton = {
+            Row {
+                if (currentLimit > 0) {
+                    TextButton(
+                        onClick = {
+                            onConfirm(0.0)
+                        }
+                    ) {
+                        Text("Видалити ліміт", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Скасувати")
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -176,14 +438,14 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: Str
                             Text(
                                 "Доходи",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextLight.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
                         }
                         Text(
                             formatCurrency(income, currency),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextLight
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
@@ -198,14 +460,14 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: Str
                             Text(
                                 "Витрати",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextLight.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
                         }
                         Text(
                             formatCurrency(expenses, currency),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextLight
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }

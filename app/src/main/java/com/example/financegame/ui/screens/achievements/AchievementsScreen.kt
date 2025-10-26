@@ -536,7 +536,7 @@ fun AchievementDetailDialog(
                             AchievementCategory.STREAK -> Icons.Default.LocalFireDepartment
                         },
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -548,7 +548,7 @@ fun AchievementDetailDialog(
                             AchievementCategory.STREAK -> "Серії"
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = TextSecondary,
                         fontWeight = FontWeight.Medium
                     )
                 }

@@ -1,6 +1,7 @@
 package com.example.financegame.ui.screens.expenses
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financegame.data.local.database.AppDatabase
@@ -17,11 +18,19 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val expenseRepository = ExpenseRepository(database.expenseDao())
     private val userRepository = UserRepository(database.userDao())
 
+    // SharedPreferences для збереження ліміту
+    private val prefs = application.getSharedPreferences("ExpensePrefs", Context.MODE_PRIVATE)
+    private val EXPENSE_LIMIT_KEY = "expense_limit"
+
     // 🆕 Система відстеження досягнень
     private val achievementTracker = AchievementTracker(database, viewModelScope)
 
     private val _showAddDialog = MutableStateFlow(false)
     val showAddDialog: StateFlow<Boolean> = _showAddDialog
+
+    // 🆕 Ліміт витрат
+    private val _expenseLimit = MutableStateFlow(prefs.getFloat(EXPENSE_LIMIT_KEY, 0f).toDouble())
+    val expenseLimit: StateFlow<Double> = _expenseLimit
 
     val allExpenses: StateFlow<List<Expense>> = expenseRepository.getAllExpenses(1)
         .stateIn(
@@ -59,6 +68,14 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = 0.0
     )
+
+    // 🆕 Встановлення ліміту витрат
+    fun setExpenseLimit(limit: Double) {
+        viewModelScope.launch {
+            _expenseLimit.value = limit
+            prefs.edit().putFloat(EXPENSE_LIMIT_KEY, limit.toFloat()).apply()
+        }
+    }
 
     fun addExpense(
         amount: Double,

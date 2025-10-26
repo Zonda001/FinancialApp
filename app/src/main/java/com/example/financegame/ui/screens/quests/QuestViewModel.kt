@@ -26,7 +26,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private val DAILY_QUEST_PREFIX = "daily_quest_"
 
     // 🆕 Система відстеження досягнень
-    private val achievementTracker = AchievementTracker(database, viewModelScope)
+    private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
 
     val activeQuests: StateFlow<List<Quest>> = questRepository.getActiveQuests()
         .stateIn(

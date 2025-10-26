@@ -5,9 +5,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +64,7 @@ fun AchievementsScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Карта прогресу
             AchievementProgressCard(
                 unlocked = unlockedCount,
                 total = totalCount
@@ -70,13 +72,15 @@ fun AchievementsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            CategoryFilters(
+            // Горизонтальний скрол категорій (як у ReportsScreen)
+            CategoryFiltersScroll(
                 selectedCategory = selectedCategory,
                 onCategorySelected = { selectedCategory = it }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Сітка досягнень
             if (filteredAchievements.isEmpty()) {
                 EmptyAchievementsPlaceholder()
             } else {
@@ -127,7 +131,7 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
                     Brush.horizontalGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.colorScheme.secondary
                         )
                     )
                 )
@@ -186,46 +190,171 @@ fun AchievementProgressCard(unlocked: Int, total: Int) {
     }
 }
 
+// ✅ НОВИЙ КОМПОНЕНТ: Горизонтальний скрол категорій (як у ReportsScreen)
 @Composable
-fun CategoryFilters(
+fun CategoryFiltersScroll(
     selectedCategory: AchievementCategory?,
     onCategorySelected: (AchievementCategory?) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        FilterChip(
-            selected = selectedCategory == null,
-            onClick = { onCategorySelected(null) },
-            label = { Text("Всі") }
+        Text(
+            "Категорії",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
         )
-        FilterChip(
-            selected = selectedCategory == AchievementCategory.GENERAL,
-            onClick = { onCategorySelected(AchievementCategory.GENERAL) },
-            label = { Text("Загальні") },
-            leadingIcon = {
-                Icon(Icons.Default.Dashboard, contentDescription = null, modifier = Modifier.size(18.dp))
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Кнопка "Всі"
+            item {
+                FilterChip(
+                    selected = selectedCategory == null,
+                    onClick = { onCategorySelected(null) },
+                    label = {
+                        Text(
+                            "Всі",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = if (selectedCategory == null) {
+                        {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    } else null,
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
             }
-        )
-        FilterChip(
-            selected = selectedCategory == AchievementCategory.SAVINGS,
-            onClick = { onCategorySelected(AchievementCategory.SAVINGS) },
-            label = { Text("Економія") },
-            leadingIcon = {
-                Icon(Icons.Default.Savings, contentDescription = null, modifier = Modifier.size(18.dp))
+
+            // Категорія "Загальні"
+            item {
+                FilterChip(
+                    selected = selectedCategory == AchievementCategory.GENERAL,
+                    onClick = { onCategorySelected(AchievementCategory.GENERAL) },
+                    label = {
+                        Text(
+                            "Загальні",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            if (selectedCategory == AchievementCategory.GENERAL)
+                                Icons.Default.Check
+                            else
+                                Icons.Default.Dashboard,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
             }
-        )
-        FilterChip(
-            selected = selectedCategory == AchievementCategory.QUESTS,
-            onClick = { onCategorySelected(AchievementCategory.QUESTS) },
-            label = { Text("Квести") },
-            leadingIcon = {
-                Icon(Icons.Default.EmojiEvents, contentDescription = null, modifier = Modifier.size(18.dp))
+
+            // Категорія "Економія"
+            item {
+                FilterChip(
+                    selected = selectedCategory == AchievementCategory.SAVINGS,
+                    onClick = { onCategorySelected(AchievementCategory.SAVINGS) },
+                    label = {
+                        Text(
+                            "Економія",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            if (selectedCategory == AchievementCategory.SAVINGS)
+                                Icons.Default.Check
+                            else
+                                Icons.Default.Savings,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
             }
-        )
+
+            // Категорія "Квести"
+            item {
+                FilterChip(
+                    selected = selectedCategory == AchievementCategory.QUESTS,
+                    onClick = { onCategorySelected(AchievementCategory.QUESTS) },
+                    label = {
+                        Text(
+                            "Квести",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            if (selectedCategory == AchievementCategory.QUESTS)
+                                Icons.Default.Check
+                            else
+                                Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
+
+            // Категорія "Серії"
+            item {
+                FilterChip(
+                    selected = selectedCategory == AchievementCategory.STREAK,
+                    onClick = { onCategorySelected(AchievementCategory.STREAK) },
+                    label = {
+                        Text(
+                            "Серії",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            if (selectedCategory == AchievementCategory.STREAK)
+                                Icons.Default.Check
+                            else
+                                Icons.Default.LocalFireDepartment,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -244,7 +373,6 @@ fun AchievementCard(achievement: Achievement, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .scale(scale)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (achievement.isUnlocked) {
@@ -321,7 +449,7 @@ fun AchievementCard(achievement: Achievement, onClick: () -> Unit) {
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = PrimaryBlue,
+                        color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
 
@@ -456,7 +584,7 @@ fun AchievementDetailDialog(
                                     "${achievement.currentProgress} / ${achievement.requirement}",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
 
@@ -468,7 +596,7 @@ fun AchievementDetailDialog(
                                     .fillMaxWidth()
                                     .height(8.dp)
                                     .clip(RoundedCornerShape(4.dp)),
-                                color = PrimaryBlue,
+                                color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surface
                             )
 
@@ -587,6 +715,13 @@ fun EmptyAchievementsPlaceholder() {
                 "Немає досягнень",
                 style = MaterialTheme.typography.titleLarge,
                 color = TextSecondary
+            )
+            Text(
+                "Виконуйте квести щоб розблокувати досягнення",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
             )
         }
     }

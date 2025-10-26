@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 class AchievementViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val achievementRepository = AchievementRepository(database.achievementDao())
-    private val achievementTracker = AchievementTracker(database, viewModelScope)
+    private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
 
     val allAchievements: StateFlow<List<Achievement>> = achievementRepository.getAllAchievements()
         .stateIn(

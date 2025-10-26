@@ -1,5 +1,6 @@
 package com.example.financegame.ui.screens.profile
 
+import android.content.Context
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,25 @@ fun ProfileScreen(
     val user by viewModel.currentUser.collectAsState()
     val achievementsCount by viewModel.unlockedAchievementsCount.collectAsState()
     var showEditDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val streakPrefs = remember { context.getSharedPreferences("StreakPrefs", Context.MODE_PRIVATE) }
+    val currentStreak = remember {
+        val lastStreakDate = streakPrefs.getString("last_streak_date", "") ?: ""
+        val today = getTodayDateString()
+        val yesterday = getYesterdayDateString()
+
+        // Якщо остання активність не була вчора чи сьогодні - скидаємо серію
+        if (lastStreakDate != today && lastStreakDate != yesterday && lastStreakDate.isNotEmpty()) {
+            streakPrefs.edit().apply {
+                putInt("current_streak", 0)
+                putString("last_streak_date", "")
+                apply()
+            }
+            0
+        } else {
+            streakPrefs.getInt("current_streak", 0)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -165,11 +186,18 @@ fun ProfileScreen(
                         color = AccentOrange,
                         modifier = Modifier.weight(1f)
                     )
+                    StatCard(
+                        title = "Серія днів",
+                        value = "$currentStreak",
+                        icon = Icons.Default.LocalFireDepartment,
+                        color = AccentOrange,
+                        modifier = Modifier.weight(1f)
+                    )
+
                 }
             }
         }
     }
-
     // Діалог редагування профілю
     if (showEditDialog && user != null) {
         EditProfileDialog(
@@ -472,4 +500,13 @@ fun EditProfileDialog(
             }
         }
     }
+}
+private fun getTodayDateString(): String {
+    val calendar = java.util.Calendar.getInstance()
+    return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
+}
+private fun getYesterdayDateString(): String {
+    val calendar = java.util.Calendar.getInstance()
+    calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)
+    return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
 }

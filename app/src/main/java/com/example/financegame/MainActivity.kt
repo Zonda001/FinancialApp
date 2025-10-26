@@ -49,6 +49,8 @@ class MainActivity : FragmentActivity() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         lifecycleScope.launch {
+            // ✅ ПЕРЕВІРЯЄМО СТРІК
+            checkStreakReset()
             // ✅ ПЕРЕВІРЯЄМО ТА СКИДАЄМО ЩОДЕННІ КВЕСТИ
             checkAndResetDailyQuests()
 
@@ -217,12 +219,34 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+
+    private suspend fun checkStreakReset() {
+        val streakPrefs = getSharedPreferences("StreakPrefs", Context.MODE_PRIVATE)
+        val lastStreakDate = streakPrefs.getString("last_streak_date", "") ?: ""
+        val today = getTodayDateString()
+        val yesterday = getYesterdayDateString()
+
+        // Якщо остання активність не була вчора чи сьогодні - скидаємо серію
+        if (lastStreakDate != today && lastStreakDate != yesterday && lastStreakDate.isNotEmpty()) {
+            streakPrefs.edit().apply {
+                putInt("current_streak", 0)
+                apply()
+            }
+        }
+    }
+
+
     private fun isDailyQuest(quest: Quest): Boolean {
         return quest.title.contains("💪 Щоденна мотивація")
     }
 
     private fun getTodayDateString(): String {
         val calendar = java.util.Calendar.getInstance()
+        return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
+    }
+    private fun getYesterdayDateString(): String {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)
         return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
     }
 }

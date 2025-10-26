@@ -23,7 +23,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val EXPENSE_LIMIT_KEY = "expense_limit"
 
     // 🆕 Система відстеження досягнень
-    private val achievementTracker = AchievementTracker(database, viewModelScope)
+    private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
 
     private val _showAddDialog = MutableStateFlow(false)
     val showAddDialog: StateFlow<Boolean> = _showAddDialog

@@ -1,5 +1,6 @@
 package com.example.financegame.util
 
+import android.content.Context
 import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.local.database.entities.AchievementCategory
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
  */
 class AchievementTracker(
     private val database: AppDatabase,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val context: Context  // ДОДАТИ
 ) {
 
     // ======================== ЗАГАЛЬНІ ДОСЯГНЕННЯ ========================
@@ -89,6 +91,53 @@ class AchievementTracker(
         updateAchievementProgress("Незламний", streakDays, AchievementCategory.STREAK)
     }
 
+    suspend fun updateDailyStreak() {
+        val prefs = context.getSharedPreferences("StreakPrefs", Context.MODE_PRIVATE)
+        val today = getTodayDateString()
+        val lastStreakDate = prefs.getString("last_streak_date", "") ?: ""
+        val currentStreak = prefs.getInt("current_streak", 0)
+
+        // Якщо вже додавали витрату сьогодні - не оновлюємо
+        if (lastStreakDate == today) {
+            return
+        }
+
+        val yesterday = getYesterdayDateString()
+        val newStreak = if (lastStreakDate == yesterday) {
+            // Продовжуємо серію
+            currentStreak + 1
+        } else if (lastStreakDate.isEmpty()) {
+            // Перший день
+            1
+        } else {
+            // Серія перервалася, починаємо заново
+            1
+        }
+
+        // Зберігаємо нову серію
+        prefs.edit().apply {
+            putString("last_streak_date", today)
+            putInt("current_streak", newStreak)
+            apply()
+        }
+
+        // Оновлюємо досягнення
+        checkStreakAchievement(newStreak)
+    }
+
+    private fun getTodayDateString(): String {
+        val calendar = java.util.Calendar.getInstance()
+        return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
+    }
+
+    private fun getYesterdayDateString(): String {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)
+        return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
+    }
+
+
+
     // ======================== ДОПОМІЖНІ ФУНКЦІЇ ========================
 
     private suspend fun updateAchievementProgress(title: String, progress: Int, category: AchievementCategory) {
@@ -122,6 +171,7 @@ class AchievementTracker(
 
     fun onExpenseAdded() {
         scope.launch {
+            updateDailyStreak() // ДОДАТИ ЦЕЙ РЯДОК
             checkExpenseAdded()
             checkExpenseWithDescription()
             checkCategoryDiversity()

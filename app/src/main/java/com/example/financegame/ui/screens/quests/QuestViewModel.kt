@@ -206,21 +206,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // 🧪 ТЕСТОВА ФУНКЦІЯ - для перевірки скидання щоденних квестів
-    fun testResetDailyQuests() {
-        viewModelScope.launch {
-            // Очищаємо всі дати виконання щоденних квестів
-            val allQuests = database.questDao().getAllQuests().first()
-            allQuests.forEach { quest ->
-                if (isDailyQuest(quest)) {
-                    prefs.edit().remove("${DAILY_QUEST_PREFIX}${quest.id}").apply()
-                    if (quest.isCompleted) {
-                        questRepository.resetQuest(quest.id)
-                    }
-                }
-            }
-        }
-    }
+
 
     fun getQuestNavigationTarget(quest: Quest): QuestNavigationTarget? {
         return when {

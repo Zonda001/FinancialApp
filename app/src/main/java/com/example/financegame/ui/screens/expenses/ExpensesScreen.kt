@@ -189,7 +189,7 @@ fun ExpenseLimitCard(
                         Icon(
                             Icons.Default.TrendingUp,
                             contentDescription = null,
-                            tint = progressColor,
+                            tint = TextPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))

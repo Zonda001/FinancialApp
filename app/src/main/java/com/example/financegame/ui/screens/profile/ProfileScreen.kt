@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -75,7 +76,11 @@ fun ProfileScreen(
                                 )
                             )
                         )
-                        .border(4.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .border(
+                            width = 4.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = CircleShape
+                        )
                         .clickable { showEditDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
@@ -143,7 +148,7 @@ fun ProfileScreen(
                         title = "Досвід",
                         value = currentUser.experience.toString(),
                         icon = Icons.Default.EmojiEvents,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
@@ -208,21 +213,21 @@ fun ExperienceProgressCard(
                     Text(
                         "Досвід до наступного рівня",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         "$expForNextLevel XP",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = TextPrimary
                     )
                 }
 
                 Icon(
                     Icons.Default.TrendingUp,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
+                    tint = TextPrimary,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -235,7 +240,7 @@ fun ExperienceProgressCard(
                     .fillMaxWidth()
                     .height(12.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Box(
                     modifier = Modifier
@@ -244,7 +249,10 @@ fun ExperienceProgressCard(
                         .clip(RoundedCornerShape(6.dp))
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.primary)
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.tertiary,
+                                    MaterialTheme.colorScheme.primary
+                                )
                             )
                         )
                 )
@@ -259,12 +267,12 @@ fun ExperienceProgressCard(
                 Text(
                     "$currentExp XP",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = TextPrimary
                 )
                 Text(
                     "$totalExpNeeded XP",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = TextPrimary
                 )
             }
 
@@ -273,7 +281,7 @@ fun ExperienceProgressCard(
             Text(
                 "${(progress * 100).toInt()}% до рівня ${level + 1}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = TextPrimary,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -289,8 +297,7 @@ fun StatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .height(110.dp),
+        modifier = modifier.height(110.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -312,12 +319,13 @@ fun StatCard(
                 value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
             Text(
                 title,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
             )
         }
@@ -436,7 +444,7 @@ fun EditProfileDialog(
                 Text(
                     "${newName.length}/20 символів",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))

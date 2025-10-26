@@ -306,6 +306,7 @@ private fun getMoonlightDark() = darkColorScheme(
     onError = TextLight
 )
 
+// ⚫ MONOCHROME
 private fun getMonochromeLight() = lightColorScheme(
     primary = Color(0xFF000000),            // Чорний для TopBar та акцентів
     secondary = Color(0xFF424242),          // Темно-сірий
@@ -321,9 +322,8 @@ private fun getMonochromeLight() = lightColorScheme(
     onSurfaceVariant = Color(0xFF757575),   // Сірий для невибраних елементів
     error = Color(0xFF000000),
     onError = Color(0xFFFFFFFF),
-    outline = Color(0xFFBDBDBD)
+    outline = Color(0xFF424242)             // Темніший сірий для обідків
 )
-
 
 private fun getMonochromeDark() = darkColorScheme(
     primary = Color(0xFF000000),            // Чорний для TopBar
@@ -340,7 +340,7 @@ private fun getMonochromeDark() = darkColorScheme(
     onSurfaceVariant = Color(0xFFBDBDBD),   // Світло-сірий для невибраних елементів
     error = Color(0xFFFFFFFF),
     onError = Color(0xFF000000),
-    outline = Color(0xFF424242)
+    outline = Color(0xFF1E1E1E)             // Темно-сірий для обідків (майже невидимий на чорному)
 )
 
 @Composable

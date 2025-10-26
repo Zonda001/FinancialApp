@@ -51,7 +51,10 @@ class MainActivity : FragmentActivity() {
             // Перевіряємо чи користувач зареєстрований
             val wasRegistered = prefs.getBoolean(KEY_REGISTERED, false)
 
-            if (wasRegistered) {
+            // Перевіряємо чи є користувач в базі даних
+            val existingUser = database.userDao().getCurrentUser().first()
+
+            if (wasRegistered && existingUser != null) {
                 // Користувач вже реєструвався - показуємо екран входу
                 isRegistered.value = true
                 isAuthenticated.value = false
@@ -93,17 +96,23 @@ class MainActivity : FragmentActivity() {
                                 onRegistrationComplete = { nickname, avatar, password, useBiometric ->
                                     lifecycleScope.launch {
                                         // Зберігаємо користувача в БД
-                                        database.userDao().insertUser(
-                                            User(
-                                                id = 1,
-                                                name = nickname,
-                                                avatarUrl = avatar,
-                                                email = "",
-                                                level = 1,
-                                                experience = 0,
-                                                totalPoints = 0
-                                            )
+                                        val newUser = User(
+                                            id = 1,
+                                            name = nickname,
+                                            avatarUrl = avatar,
+                                            email = "",
+                                            level = 1,
+                                            experience = 0,
+                                            totalPoints = 0
                                         )
+
+                                        // Видаляємо старого користувача якщо є
+                                        val existingUser = database.userDao().getCurrentUser().first()
+                                        if (existingUser != null) {
+                                            database.userDao().updateUser(newUser)
+                                        } else {
+                                            database.userDao().insertUser(newUser)
+                                        }
 
                                         // Зберігаємо пароль та статус реєстрації
                                         prefs.edit().apply {
@@ -122,17 +131,17 @@ class MainActivity : FragmentActivity() {
                                 },
                                 onGuestMode = {
                                     lifecycleScope.launch {
-                                        database.userDao().insertUser(
-                                            User(
-                                                id = 1,
-                                                name = "Гість",
-                                                avatarUrl = "👤",
-                                                email = "",
-                                                level = 1,
-                                                experience = 0,
-                                                totalPoints = 0
-                                            )
+                                        val guestUser = User(
+                                            id = 1,
+                                            name = "Гість",
+                                            avatarUrl = "👤",
+                                            email = "",
+                                            level = 1,
+                                            experience = 0,
+                                            totalPoints = 0
                                         )
+
+                                        database.userDao().insertUser(guestUser)
 
                                         prefs.edit().apply {
                                             putBoolean(KEY_REGISTERED, true)

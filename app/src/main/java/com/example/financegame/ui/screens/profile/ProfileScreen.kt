@@ -82,10 +82,9 @@ fun ProfileScreen(
                         text = if (currentUser.avatarUrl.isNotEmpty())
                             currentUser.avatarUrl
                         else
-                            currentUser.name.first().uppercase(),
+                            currentUser.name.firstOrNull()?.uppercase() ?: "?",
                         style = MaterialTheme.typography.displayLarge,
-                        fontSize = MaterialTheme.typography.displayLarge.fontSize * 2f,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -93,9 +92,10 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Ім'я користувача
-                Box(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = currentUser.name,
@@ -103,17 +103,17 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold
                     )
 
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     IconButton(
                         onClick = { showEditDialog = true },
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.CenterEnd)
+                        modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Редагувати ім'я",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -232,7 +232,7 @@ fun ExperienceProgressCard(
                         "$expForNextLevel XP",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
 
@@ -290,7 +290,7 @@ fun ExperienceProgressCard(
             Text(
                 "${(progress * 100).toInt()}% до рівня ${level + 1}",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.SemiBold
             )
         }

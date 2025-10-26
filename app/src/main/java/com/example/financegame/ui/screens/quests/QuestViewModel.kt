@@ -9,6 +9,7 @@ import com.example.financegame.data.local.database.entities.QuestType
 import com.example.financegame.data.repository.QuestRepository
 import com.example.financegame.data.repository.UserRepository
 import com.example.financegame.data.repository.ExpenseRepository
+import com.example.financegame.util.AchievementTracker
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -18,6 +19,9 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private val questRepository = QuestRepository(database.questDao())
     private val userRepository = UserRepository(database.userDao())
     private val expenseRepository = ExpenseRepository(database.expenseDao())
+
+    // 🆕 Система відстеження досягнень
+    private val achievementTracker = AchievementTracker(database, viewModelScope)
 
     val activeQuests: StateFlow<List<Quest>> = questRepository.getActiveQuests()
         .stateIn(
@@ -135,7 +139,6 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             questRepository.completeQuest(quest.id)
 
-            // ВИПРАВЛЕННЯ: Додаємо досвід через ProfileViewModel метод
             userRepository.getCurrentUser().first()?.let { user ->
                 val newExp = user.experience + quest.reward
                 val newLevel = calculateLevel(newExp)
@@ -148,6 +151,10 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
                         totalPoints = newTotalPoints
                     )
                 )
+
+                // 🆕 Відстежуємо досягнення
+                achievementTracker.onQuestCompleted()
+                achievementTracker.onLevelUp(newLevel)
             }
 
             checkAndUpdateQuestProgress()
@@ -160,12 +167,37 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Для квестів "в один клік"
+    // 🆕 НОВА ЛОГІКА: Квести з навігацією замість миттєвого виконання
+    fun getQuestNavigationTarget(quest: Quest): QuestNavigationTarget? {
+        return when {
+            quest.title.contains("📊 Переглянь статистику") -> QuestNavigationTarget.REPORTS
+            quest.title.contains("⚙️ Налаштуй тему") -> QuestNavigationTarget.SETTINGS
+            quest.title.contains("🏆 Переглянь досягнення") -> QuestNavigationTarget.ACHIEVEMENTS
+            quest.title.contains("🌟 Зміни аватар") -> QuestNavigationTarget.PROFILE
+            quest.title.contains("🎨 Спробуй темну тему") -> QuestNavigationTarget.SETTINGS
+            quest.title.contains("💰 Вибери валюту") -> QuestNavigationTarget.SETTINGS
+            quest.title.contains("🔔 Увімкни сповіщення") -> QuestNavigationTarget.SETTINGS
+            else -> null
+        }
+    }
+
+    // Для квестів які можна виконати одразу
+    fun canCompleteInstantly(quest: Quest): Boolean {
+        return when {
+            quest.title.contains("🎯 Швидкий старт") -> true
+            quest.title.contains("💪 Щоденна мотивація") -> true
+            quest.title.contains("🎁 Бонус новачка") -> true
+            else -> false
+        }
+    }
+
     fun completeOneClickQuest(questId: Int) {
         viewModelScope.launch {
             activeQuests.value.find { it.id == questId }?.let { quest ->
-                questRepository.updateQuestProgress(quest.id, 1f)
-                completeQuest(quest)
+                if (canCompleteInstantly(quest)) {
+                    questRepository.updateQuestProgress(quest.id, 1f)
+                    completeQuest(quest)
+                }
             }
         }
     }
@@ -173,4 +205,12 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private fun calculateLevel(experience: Int): Int {
         return (kotlin.math.sqrt(experience.toDouble() / 100.0)).toInt() + 1
     }
+}
+
+// 🆕 Enum для навігації квестів
+enum class QuestNavigationTarget {
+    REPORTS,
+    SETTINGS,
+    ACHIEVEMENTS,
+    PROFILE
 }

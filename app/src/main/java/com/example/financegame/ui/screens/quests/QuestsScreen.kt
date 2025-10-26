@@ -1,7 +1,6 @@
 package com.example.financegame.ui.screens.quests
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,20 +12,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.Quest
 import com.example.financegame.data.local.database.entities.QuestType
 import com.example.financegame.ui.theme.*
-import com.example.financegame.ui.theme.TextPrimary
-import com.example.financegame.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestsScreen(
-    viewModel: QuestViewModel = viewModel()
+    viewModel: QuestViewModel = viewModel(),
+    onNavigateToReports: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToAchievements: () -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     val activeQuests by viewModel.activeQuests.collectAsState()
     val completedQuests by viewModel.completedQuests.collectAsState()
@@ -57,7 +57,6 @@ fun QuestsScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Таби для перемикання між активними і завершеними
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -68,18 +67,17 @@ fun QuestsScreen(
                     onClick = { selectedTab = 0 },
                     text = { Text("Активні (${activeQuests.size})") },
                     selectedContentColor = MaterialTheme.colorScheme.primary,
-                    unselectedContentColor = MaterialTheme.colorScheme.background
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     text = { Text("Завершені (${completedQuests.size})") },
                     selectedContentColor = MaterialTheme.colorScheme.primary,
-                    unselectedContentColor = MaterialTheme.colorScheme.background
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Контент залежно від таба
             when (selectedTab) {
                 0 -> {
                     if (activeQuests.isEmpty()) {
@@ -94,9 +92,8 @@ fun QuestsScreen(
                                 QuestCard(
                                     quest = quest,
                                     onComplete = { viewModel.completeQuest(quest) },
-                                    onOneClick = { questId ->
-                                        viewModel.completeOneClickQuest(questId)
-                                    }
+                                    onOneClick = { viewModel.completeOneClickQuest(quest.id) },
+                                    canCompleteInstantly = viewModel.canCompleteInstantly(quest)
                                 )
                             }
                         }
@@ -123,14 +120,12 @@ fun QuestsScreen(
 }
 
 @Composable
-fun QuestCard(quest: Quest, onComplete: () -> Unit, onOneClick: (Int) -> Unit) {
-    // Перевіряємо чи це квест "в один клік"
-    val isOneClickQuest = quest.title.contains("🎯") ||
-            quest.title.contains("📊") ||
-            quest.title.contains("⚙️") ||
-            quest.title.contains("🏆") ||
-            quest.title.contains("💪")
-
+fun QuestCard(
+    quest: Quest,
+    onComplete: () -> Unit,
+    onOneClick: () -> Unit,
+    canCompleteInstantly: Boolean
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -149,9 +144,12 @@ fun QuestCard(quest: Quest, onComplete: () -> Unit, onOneClick: (Int) -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            if (isOneClickQuest) Icons.Default.TouchApp else getQuestIcon(quest.questType),
+                            if (canCompleteInstantly)
+                                Icons.Default.TouchApp
+                            else
+                                getQuestIcon(quest.questType),
                             contentDescription = null,
-                            tint = if (isOneClickQuest) GoldColor else QuestActiveColor,
+                            tint = if (canCompleteInstantly) GoldColor else QuestActiveColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -171,7 +169,6 @@ fun QuestCard(quest: Quest, onComplete: () -> Unit, onOneClick: (Int) -> Unit) {
                     )
                 }
 
-                // Нагорода
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -195,69 +192,96 @@ fun QuestCard(quest: Quest, onComplete: () -> Unit, onOneClick: (Int) -> Unit) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Для квестів "в один клік" показуємо кнопку одразу
-            if (isOneClickQuest) {
-                Button(
-                    onClick = { onOneClick(quest.id) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldColor
-                    )
-                ) {
-                    Icon(Icons.Default.TouchApp, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Виконати зараз!", color = TextPrimary)
-                }
-            } else {
-                // Для звичайних квестів показуємо прогрес
-                Column {
-                    Row(
+            when {
+                // Квести які можна виконати одразу
+                canCompleteInstantly -> {
+                    Button(
+                        onClick = onOneClick,
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Прогрес",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldColor
                         )
+                    ) {
+                        Icon(Icons.Default.TouchApp, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Виконати зараз!", color = TextPrimary)
+                    }
+                }
+
+                // Звичайні квести з прогресом
+                else -> {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Прогрес",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                            Text(
+                                "${(quest.progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = QuestActiveColor
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        LinearProgressIndicator(
+                            progress = quest.progress,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = QuestActiveColor,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Підказка як виконати квест
                         Text(
-                            "${(quest.progress * 100).toInt()}%",
+                            getQuestHint(quest.title),
                             style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = QuestActiveColor
+                            color = TextSecondary.copy(alpha = 0.8f)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    LinearProgressIndicator(
-                        progress = quest.progress,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = QuestActiveColor,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                }
-
-                // Кнопка завершення (якщо прогрес 100%)
-                if (quest.progress >= 1f) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = onComplete,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = QuestCompletedColor
-                        )
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Отримати нагороду!")
+                    if (quest.progress >= 1f) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = onComplete,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = QuestCompletedColor
+                            )
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Отримати нагороду!")
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+// Функція підказок для квестів
+fun getQuestHint(questTitle: String): String {
+    return when {
+        questTitle.contains("📊") -> "💡 Зайди у вкладку 'Звіти' щоб виконати"
+        questTitle.contains("⚙️") && questTitle.contains("тему") -> "💡 Відкрий 'Налаштування' → 'Кольорова тема'"
+        questTitle.contains("🏆") -> "💡 Відкрий вкладку 'Досягнення'"
+        questTitle.contains("🌟") -> "💡 Зайди в 'Профіль' та натисни кнопку редагування"
+        questTitle.contains("🎨") -> "💡 Відкрий 'Налаштування' → 'Режим теми' → 'Темна'"
+        questTitle.contains("💰") -> "💡 Відкрий 'Налаштування' → 'Валюта'"
+        questTitle.contains("🔔") -> "💡 Відкрий 'Налаштування' → увімкни 'Сповіщення'"
+        questTitle.contains("Перший крок") -> "💡 Додай витрату у вкладці 'Витрати'"
+        else -> ""
     }
 }
 

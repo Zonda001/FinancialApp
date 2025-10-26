@@ -68,19 +68,38 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             )
 
-            // КВЕСТИ "В ОДИН КЛІК"
+            // ======================== КВЕСТИ "В ОДИН КЛІК" ========================
             val oneClickQuests = listOf(
+                // Квести які виконуються миттєво
                 Quest(
                     title = "🎯 Швидкий старт",
-                    description = "Натисни щоб отримати перші бали!",
+                    description = "Натисни кнопку щоб отримати перші бали!",
                     reward = 50,
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
                 ),
                 Quest(
+                    title = "💪 Щоденна мотивація",
+                    description = "Отримай бонус за відвідування додатку",
+                    reward = 50,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+                Quest(
+                    title = "🎁 Бонус новачка",
+                    description = "Отримай подарунковий досвід!",
+                    reward = 100,
+                    questType = QuestType.SAVE_MONEY,
+                    progress = 0f,
+                    isCompleted = false
+                ),
+
+                // Квести з навігацією
+                Quest(
                     title = "📊 Переглянь статистику",
-                    description = "Відкрий розділ звітів",
+                    description = "Відкрий розділ звітів та переглянь свою статистику",
                     reward = 50,
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
@@ -96,15 +115,7 @@ abstract class AppDatabase : RoomDatabase() {
                 ),
                 Quest(
                     title = "🏆 Переглянь досягнення",
-                    description = "Відкрий розділ досягнень",
-                    reward = 50,
-                    questType = QuestType.SAVE_MONEY,
-                    progress = 0f,
-                    isCompleted = false
-                ),
-                Quest(
-                    title = "💪 Щоденна мотивація",
-                    description = "Отримай бонус за відвідування додатку",
+                    description = "Відкрий розділ досягнень та подивись свій прогрес",
                     reward = 50,
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
@@ -136,23 +147,15 @@ abstract class AppDatabase : RoomDatabase() {
                 ),
                 Quest(
                     title = "🔔 Увімкни сповіщення",
-                    description = "Активуй сповіщення про витрати",
+                    description = "Активуй сповіщення про витрати в налаштуваннях",
                     reward = 60,
-                    questType = QuestType.SAVE_MONEY,
-                    progress = 0f,
-                    isCompleted = false
-                ),
-                Quest(
-                    title = "🎁 Бонус новачка",
-                    description = "Отримай подарунковий досвід!",
-                    reward = 100,
                     questType = QuestType.SAVE_MONEY,
                     progress = 0f,
                     isCompleted = false
                 )
             )
 
-            // ЗВИЧАЙНІ КВЕСТИ
+            // ======================== ЗВИЧАЙНІ КВЕСТИ ========================
             val regularQuests = listOf(
                 Quest(
                     title = "Перший крок",
@@ -196,7 +199,7 @@ abstract class AppDatabase : RoomDatabase() {
 
             (oneClickQuests + regularQuests).forEach { questDao.insertQuest(it) }
 
-            // ДОСЯГНЕННЯ
+            // ======================== ДОСЯГНЕННЯ ========================
             val achievements = listOf(
                 // Загальні досягнення
                 Achievement(

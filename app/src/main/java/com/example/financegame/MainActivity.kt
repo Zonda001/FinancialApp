@@ -1,5 +1,6 @@
 package com.example.financegame
 
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +16,7 @@ import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.local.database.entities.User
 import com.example.financegame.data.settings.ThemeMode
 import com.example.financegame.ui.navigation.MainScreen
-import com.example.financegame.ui.screens.auth.BiometricAuthScreen
+import com.example.financegame.ui.screens.auth.LoginScreen
 import com.example.financegame.ui.screens.auth.RegistrationScreen
 import com.example.financegame.ui.screens.settings.SettingsViewModel
 import com.example.financegame.ui.theme.FinanceGameTheme
@@ -30,7 +31,12 @@ class MainActivity : FragmentActivity() {
 
     private var isAuthenticated = mutableStateOf(false)
     private var isRegistered = mutableStateOf(false)
-    private var needsBiometric = mutableStateOf(false)
+    private var isLoading = mutableStateOf(true)
+
+    // SharedPreferences для збереження паролю
+    private val PREFS_NAME = "FinanceGamePrefs"
+    private val KEY_PASSWORD = "user_password"
+    private val KEY_REGISTERED = "user_registered"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,24 +45,23 @@ class MainActivity : FragmentActivity() {
         database = AppDatabase.getDatabase(this)
         settingsViewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
 
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
         lifecycleScope.launch {
-            val user = database.userDao().getCurrentUser().first()
+            // Перевіряємо чи користувач зареєстрований
+            val wasRegistered = prefs.getBoolean(KEY_REGISTERED, false)
 
-            if (user != null) {
+            if (wasRegistered) {
+                // Користувач вже реєструвався - показуємо екран входу
                 isRegistered.value = true
-
-                val biometricEnabled = settingsViewModel.biometricEnabled.first()
-
-                if (biometricEnabled && biometricAuthManager.isBiometricAvailable()) {
-                    needsBiometric.value = true
-                    isAuthenticated.value = false
-                } else {
-                    isAuthenticated.value = true
-                }
+                isAuthenticated.value = false
             } else {
+                // Перший запуск - показуємо реєстрацію
                 isRegistered.value = false
                 isAuthenticated.value = false
             }
+
+            isLoading.value = false
         }
 
         setContent {
@@ -78,10 +83,16 @@ class MainActivity : FragmentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     when {
+                        isLoading.value -> {
+                            // Можна додати Splash Screen
+                        }
+
                         !isRegistered.value -> {
+                            // ПЕРШИЙ РАЗ - Екран реєстрації
                             RegistrationScreen(
                                 onRegistrationComplete = { nickname, avatar, password, useBiometric ->
                                     lifecycleScope.launch {
+                                        // Зберігаємо користувача в БД
                                         database.userDao().insertUser(
                                             User(
                                                 id = 1,
@@ -94,9 +105,17 @@ class MainActivity : FragmentActivity() {
                                             )
                                         )
 
-                                        // Зберігаємо налаштування біометрії
+                                        // Зберігаємо пароль та статус реєстрації
+                                        prefs.edit().apply {
+                                            putString(KEY_PASSWORD, password)
+                                            putBoolean(KEY_REGISTERED, true)
+                                            apply()
+                                        }
+
+                                        // Налаштування біометрії
                                         settingsViewModel.setBiometricEnabled(useBiometric)
 
+                                        // Входимо в додаток
                                         isRegistered.value = true
                                         isAuthenticated.value = true
                                     }
@@ -114,6 +133,12 @@ class MainActivity : FragmentActivity() {
                                                 totalPoints = 0
                                             )
                                         )
+
+                                        prefs.edit().apply {
+                                            putBoolean(KEY_REGISTERED, true)
+                                            apply()
+                                        }
+
                                         isRegistered.value = true
                                         isAuthenticated.value = true
                                     }
@@ -122,16 +147,25 @@ class MainActivity : FragmentActivity() {
                             )
                         }
 
-                        needsBiometric.value && !isAuthenticated.value -> {
-                            BiometricAuthScreen(
-                                onAuthenticate = {
+                        !isAuthenticated.value -> {
+                            // НАСТУПНІ РАЗИ - Екран входу
+                            val savedPassword = prefs.getString(KEY_PASSWORD, "") ?: ""
+                            val biometricEnabled = settingsViewModel.biometricEnabled.collectAsState().value
+
+                            LoginScreen(
+                                savedPassword = savedPassword,
+                                biometricAvailable = biometricAuthManager.isBiometricAvailable() && biometricEnabled,
+                                onPasswordSuccess = {
+                                    isAuthenticated.value = true
+                                },
+                                onBiometricClick = {
                                     biometricAuthManager.authenticate(
                                         activity = this@MainActivity,
                                         onSuccess = {
                                             isAuthenticated.value = true
                                         },
-                                        onError = { _ ->
-                                            // Тут можна додати Toast або лог
+                                        onError = { errorMessage ->
+                                            // Можна показати Toast
                                         },
                                         onFailed = {
                                             // Автентифікація не вдалася
@@ -142,6 +176,7 @@ class MainActivity : FragmentActivity() {
                         }
 
                         else -> {
+                            // Головний екран додатку
                             MainScreen(settingsViewModel = settingsViewModel)
                         }
                     }

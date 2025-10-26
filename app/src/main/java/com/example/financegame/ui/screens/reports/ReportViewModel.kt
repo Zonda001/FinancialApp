@@ -32,11 +32,17 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     private val _selectedPeriod = MutableStateFlow(ReportPeriod.THIS_MONTH)
     val selectedPeriod: StateFlow<ReportPeriod> = _selectedPeriod
 
+    init {
+        // ✅ Квест: "📊 Переглянь статистику" - виконується при відкритті екрану
+        viewModelScope.launch {
+            checkAndCompleteQuest("📊 Переглянь статистику")
+        }
+    }
+
     val periodReport: StateFlow<PeriodReport?> = _selectedPeriod.flatMapLatest { period ->
         flow {
             val (startDate, endDate) = getPeriodDates(period)
 
-            // Отримуємо всі витрати за період
             expenseRepository.getExpensesByDateRange(1, startDate, endDate).collect { expenses ->
                 val totalExpenses = expenses.filter { it.type == ExpenseType.EXPENSE }
                     .sumOf { it.amount }
@@ -46,7 +52,6 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
 
                 val balance = totalIncome - totalExpenses
 
-                // Розбивка по категоріях - використовуємо просту логіку
                 val categoryMap = expenses
                     .filter { it.type == ExpenseType.EXPENSE }
                     .groupBy { it.category }
@@ -62,7 +67,6 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }.sortedByDescending { it.amount }
 
-                // Середнє за день
                 val daysDiff = ((endDate - startDate) / (24 * 60 * 60 * 1000)).toInt() + 1
                 val dailyAverage = if (daysDiff > 0) totalExpenses / daysDiff else 0.0
 
@@ -127,6 +131,34 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 Pair(calendar.timeInMillis, endDate)
+            }
+        }
+    }
+
+    // ✅ Функція перевірки та виконання квестів
+    private suspend fun checkAndCompleteQuest(questTitle: String) {
+        val quests = database.questDao().getActiveQuests().first()
+        val quest = quests.find { it.title == questTitle }
+
+        quest?.let {
+            if (!it.isCompleted) {
+                database.questDao().updateQuestProgress(it.id, 1f)
+                database.questDao().completeQuest(it.id, System.currentTimeMillis())
+
+                val user = database.userDao().getCurrentUser().first()
+                user?.let { currentUser ->
+                    val newExp = currentUser.experience + it.reward
+                    val newLevel = (kotlin.math.sqrt(newExp.toDouble() / 100.0)).toInt() + 1
+                    val newTotalPoints = currentUser.totalPoints + it.reward
+
+                    database.userDao().updateUser(
+                        currentUser.copy(
+                            experience = newExp,
+                            level = newLevel,
+                            totalPoints = newTotalPoints
+                        )
+                    )
+                }
             }
         }
     }

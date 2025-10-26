@@ -35,6 +35,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 @Composable
 fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
     val navController = rememberNavController()
+
+    // Порядок вкладок: Профіль, Витрати, Квести, Досягнення, Звіти, Налаштування
     val screens = listOf(
         Screen.Profile,
         Screen.Expenses,
@@ -86,14 +88,42 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Profile.route,
+            startDestination = Screen.Profile.route, // Стартовий екран - Профіль
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Profile.route) { ProfileScreen() }
-            composable(Screen.Expenses.route) { ExpensesScreen() }
-            composable(Screen.Quests.route) { QuestsScreen() }
-            composable(Screen.Achievements.route) { AchievementsScreen() }
-            composable(Screen.Reports.route) { ReportsScreen() }
+            composable(Screen.Profile.route) {
+                ProfileScreen()
+            }
+
+            composable(Screen.Expenses.route) {
+                ExpensesScreen()
+            }
+
+            composable(Screen.Quests.route) {
+                QuestsScreen(
+                    onNavigateToReports = {
+                        navController.navigate(Screen.Reports.route)
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route)
+                    },
+                    onNavigateToAchievements = {
+                        navController.navigate(Screen.Achievements.route)
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.Profile.route)
+                    }
+                )
+            }
+
+            composable(Screen.Achievements.route) {
+                AchievementsScreen()
+            }
+
+            composable(Screen.Reports.route) {
+                ReportsScreen()
+            }
+
             composable(Screen.Settings.route) {
                 if (settingsViewModel != null) {
                     SettingsScreen(

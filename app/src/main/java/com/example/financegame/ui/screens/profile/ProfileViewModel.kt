@@ -40,12 +40,19 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun updateUserProfile(newName: String, newAvatar: String) {
         viewModelScope.launch {
             currentUser.value?.let { user ->
+                val oldAvatar = user.avatarUrl
+
                 userRepository.updateUser(
                     user.copy(
                         name = newName,
                         avatarUrl = newAvatar
                     )
                 )
+
+                // ✅ Квест: "🌟 Зміни аватар" (тільки якщо аватар змінився)
+                if (oldAvatar != newAvatar) {
+                    checkAndCompleteQuest("🌟 Зміни аватар")
+                }
             }
         }
     }
@@ -57,7 +64,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val newLevel = calculateLevel(newExp)
                 val newTotalPoints = user.totalPoints + points
 
-                // ВИПРАВЛЕННЯ: Оновлюємо все разом
                 userRepository.updateUser(
                     user.copy(
                         experience = newExp,
@@ -70,12 +76,29 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun calculateLevel(experience: Int): Int {
-        // Формула: рівень = sqrt(досвід / 100)
         return (kotlin.math.sqrt(experience.toDouble() / 100.0)).toInt() + 1
     }
 
     fun getExperienceForNextLevel(currentExp: Int, currentLevel: Int): Int {
         val nextLevelExp = (currentLevel * currentLevel) * 100
         return (nextLevelExp - currentExp).coerceAtLeast(0)
+    }
+
+    // ✅ Функція перевірки та виконання квестів
+    private suspend fun checkAndCompleteQuest(questTitle: String) {
+        val quests = database.questDao().getActiveQuests().first()
+        val quest = quests.find { it.title == questTitle }
+
+        quest?.let {
+            if (!it.isCompleted) {
+                // Оновлюємо прогрес до 100%
+                database.questDao().updateQuestProgress(it.id, 1f)
+                // Виконуємо квест
+                database.questDao().completeQuest(it.id, System.currentTimeMillis())
+
+                // Даємо досвід
+                addExperience(it.reward)
+            }
+        }
     }
 }

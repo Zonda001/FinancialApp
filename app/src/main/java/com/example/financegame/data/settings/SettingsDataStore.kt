@@ -74,7 +74,7 @@ class SettingsDataStore(private val context: Context) {
             preferences[CURRENCY_KEY] ?: "грн"
         }
 
-    // Сповіщення
+    // Сповіщення - ВИМКНЕНО за замовчуванням
     suspend fun saveNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[NOTIFICATIONS_KEY] = enabled
@@ -83,10 +83,10 @@ class SettingsDataStore(private val context: Context) {
 
     val notificationsFlow: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[NOTIFICATIONS_KEY] ?: true
+            preferences[NOTIFICATIONS_KEY] ?: false // ❌ ВИМКНЕНО
         }
 
-    // Біометрія
+    // Біометрія - ВИМКНЕНО за замовчуванням
     suspend fun saveBiometricEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[BIOMETRIC_KEY] = enabled
@@ -95,10 +95,10 @@ class SettingsDataStore(private val context: Context) {
 
     val biometricFlow: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[BIOMETRIC_KEY] ?: false
+            preferences[BIOMETRIC_KEY] ?: false // ❌ ВИМКНЕНО
         }
 
-    // Попередження про бюджет
+    // Попередження про бюджет - ВИМКНЕНО за замовчуванням
     suspend fun saveBudgetAlertsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[BUDGET_ALERTS_KEY] = enabled
@@ -107,7 +107,7 @@ class SettingsDataStore(private val context: Context) {
 
     val budgetAlertsFlow: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[BUDGET_ALERTS_KEY] ?: true
+            preferences[BUDGET_ALERTS_KEY] ?: false // ❌ ВИМКНЕНО
         }
 }
 
@@ -128,6 +128,5 @@ enum class AppTheme(val displayName: String, val emoji: String) {
     ICE("Ice Crystal", "❄️"),
     LAVA("Lava Flow", "🔥"),
     MOONLIGHT("Moonlight", "🌙"),
-
     MONOCHROME("Monochrome", "⚫")
 }

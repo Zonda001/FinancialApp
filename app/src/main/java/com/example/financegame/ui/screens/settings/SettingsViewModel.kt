@@ -3,6 +3,7 @@ package com.example.financegame.ui.screens.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.settings.AppTheme
 import com.example.financegame.data.settings.SettingsDataStore
 import com.example.financegame.data.settings.ThemeMode
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
+    private val database = AppDatabase.getDatabase(application)
 
     val themeMode: StateFlow<ThemeMode> = settingsDataStore.themeFlow
         .stateIn(
@@ -44,7 +46,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = false
         )
 
     val biometricEnabled: StateFlow<Boolean> = settingsDataStore.biometricFlow
@@ -58,18 +60,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = false
         )
 
     fun setTheme(theme: ThemeMode) {
         viewModelScope.launch {
             settingsDataStore.saveTheme(theme)
+
+            // ✅ Квест: "⚙️ Налаштуй тему"
+            checkAndCompleteQuest("⚙️ Налаштуй тему")
+            checkAndCompleteQuest("🎨 Спробуй темну тему")
         }
     }
 
     fun setAppTheme(theme: AppTheme) {
         viewModelScope.launch {
             settingsDataStore.saveAppTheme(theme)
+
+            // ✅ Квест: "⚙️ Налаштуй тему"
+            checkAndCompleteQuest("⚙️ Налаштуй тему")
         }
     }
 
@@ -82,12 +91,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setCurrency(currency: String) {
         viewModelScope.launch {
             settingsDataStore.saveCurrency(currency)
+
+            // ✅ Квест: "💰 Вибери валюту"
+            checkAndCompleteQuest("💰 Вибери валюту")
         }
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsDataStore.saveNotificationsEnabled(enabled)
+
+            // ✅ Квест: "🔔 Увімкни сповіщення"
+            if (enabled) {
+                checkAndCompleteQuest("🔔 Увімкни сповіщення")
+            }
         }
     }
 
@@ -100,6 +117,37 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setBudgetAlertsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsDataStore.saveBudgetAlertsEnabled(enabled)
+        }
+    }
+
+    // ✅ Функція перевірки та виконання квестів
+    private suspend fun checkAndCompleteQuest(questTitle: String) {
+        val quests = database.questDao().getActiveQuests().first()
+        val quest = quests.find { it.title == questTitle }
+
+        quest?.let {
+            if (!it.isCompleted) {
+                // Оновлюємо прогрес до 100%
+                database.questDao().updateQuestProgress(it.id, 1f)
+                // Виконуємо квест
+                database.questDao().completeQuest(it.id, System.currentTimeMillis())
+
+                // Даємо досвід користувачу
+                val user = database.userDao().getCurrentUser().first()
+                user?.let { currentUser ->
+                    val newExp = currentUser.experience + it.reward
+                    val newLevel = (kotlin.math.sqrt(newExp.toDouble() / 100.0)).toInt() + 1
+                    val newTotalPoints = currentUser.totalPoints + it.reward
+
+                    database.userDao().updateUser(
+                        currentUser.copy(
+                            experience = newExp,
+                            level = newLevel,
+                            totalPoints = newTotalPoints
+                        )
+                    )
+                }
+            }
         }
     }
 }

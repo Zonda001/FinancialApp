@@ -20,4 +20,6 @@ class QuestRepository(private val questDao: QuestDao) {
 
     suspend fun completeQuest(questId: Int) =
         questDao.completeQuest(questId, System.currentTimeMillis())
+
+    suspend fun resetQuest(questId: Int) = questDao.resetQuest(questId)
 }

@@ -32,4 +32,8 @@ interface QuestDao {
 
     @Query("UPDATE quests SET isCompleted = 1, endDate = :endDate WHERE id = :questId")
     suspend fun completeQuest(questId: Int, endDate: Long)
+
+    // Новий метод для скидання квесту
+    @Query("UPDATE quests SET isCompleted = 0, progress = 0, endDate = NULL WHERE id = :questId")
+    suspend fun resetQuest(questId: Int)
 }

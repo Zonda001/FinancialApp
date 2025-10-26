@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.local.database.entities.User
+import com.example.financegame.data.local.database.entities.Quest
 import com.example.financegame.data.settings.ThemeMode
 import com.example.financegame.ui.navigation.MainScreen
 import com.example.financegame.ui.screens.auth.LoginScreen
@@ -48,6 +49,9 @@ class MainActivity : FragmentActivity() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         lifecycleScope.launch {
+            // ✅ ПЕРЕВІРЯЄМО ТА СКИДАЄМО ЩОДЕННІ КВЕСТИ
+            checkAndResetDailyQuests()
+
             // Перевіряємо чи користувач зареєстрований
             val wasRegistered = prefs.getBoolean(KEY_REGISTERED, false)
 
@@ -192,5 +196,33 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    // ✅ ФУНКЦІЯ ДЛЯ СКИДАННЯ ЩОДЕННИХ КВЕСТІВ
+    private suspend fun checkAndResetDailyQuests() {
+        val questPrefs = getSharedPreferences("QuestPrefs", Context.MODE_PRIVATE)
+        val today = getTodayDateString()
+
+        val allQuests = database.questDao().getAllQuests().first()
+
+        allQuests.forEach { quest ->
+            if (isDailyQuest(quest)) {
+                val lastCompletedDate = questPrefs.getString("daily_quest_${quest.id}", "")
+
+                // Якщо квест виконано не сьогодні - скидаємо його
+                if (lastCompletedDate != today && quest.isCompleted) {
+                    database.questDao().resetQuest(quest.id)
+                }
+            }
+        }
+    }
+
+    private fun isDailyQuest(quest: Quest): Boolean {
+        return quest.title.contains("💪 Щоденна мотивація")
+    }
+
+    private fun getTodayDateString(): String {
+        val calendar = java.util.Calendar.getInstance()
+        return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
     }
 }

@@ -323,7 +323,6 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
             activeQuests.value.find { it.id == questId }?.let { quest ->
                 if (canCompleteInstantly(quest)) {
                     questRepository.updateQuestProgress(quest.id, 1f)
-                    completeQuest(quest)
                 }
             }
         }

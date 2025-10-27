@@ -193,8 +193,8 @@ fun QuestCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             when {
-                // Квести які можна виконати одразу
-                canCompleteInstantly -> {
+                canCompleteInstantly && quest.progress < 1f -> {
+                    // Квест ще не виконано - показуємо кнопку активації
                     Button(
                         onClick = onOneClick,
                         modifier = Modifier.fillMaxWidth(),
@@ -208,8 +208,23 @@ fun QuestCard(
                     }
                 }
 
-                // Звичайні квести з прогресом
+                quest.progress >= 1f && !quest.isCompleted -> {
+                    // Квест виконано - показуємо кнопку отримання нагороди
+                    Button(
+                        onClick = onComplete,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = QuestCompletedColor
+                        )
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Отримати нагороду!", color = TextPrimary)
+                    }
+                }
+
                 else -> {
+                    // Звичайні квести з прогресом
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

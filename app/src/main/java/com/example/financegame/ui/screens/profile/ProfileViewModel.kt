@@ -93,11 +93,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             if (!it.isCompleted) {
                 // Оновлюємо прогрес до 100%
                 database.questDao().updateQuestProgress(it.id, 1f)
-                // Виконуємо квест
-                database.questDao().completeQuest(it.id, System.currentTimeMillis())
 
-                // Даємо досвід
-                addExperience(it.reward)
             }
         }
     }

@@ -143,22 +143,6 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
         quest?.let {
             if (!it.isCompleted) {
                 database.questDao().updateQuestProgress(it.id, 1f)
-                database.questDao().completeQuest(it.id, System.currentTimeMillis())
-
-                val user = database.userDao().getCurrentUser().first()
-                user?.let { currentUser ->
-                    val newExp = currentUser.experience + it.reward
-                    val newLevel = (kotlin.math.sqrt(newExp.toDouble() / 100.0)).toInt() + 1
-                    val newTotalPoints = currentUser.totalPoints + it.reward
-
-                    database.userDao().updateUser(
-                        currentUser.copy(
-                            experience = newExp,
-                            level = newLevel,
-                            totalPoints = newTotalPoints
-                        )
-                    )
-                }
             }
         }
     }

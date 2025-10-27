@@ -236,7 +236,7 @@ fun QuestCard(
                                 .fillMaxWidth()
                                 .height(8.dp)
                                 .clip(RoundedCornerShape(4.dp)),
-                            color = QuestActiveColor,
+                            color = if (quest.progress >= 1f) QuestCompletedColor else QuestActiveColor,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
 
@@ -250,7 +250,8 @@ fun QuestCard(
                         )
                     }
 
-                    if (quest.progress >= 1f) {
+                    // КНОПКА "ОТРИМАТИ НАГОРОДУ" - показується тільки коли прогрес 100%
+                    if (quest.progress >= 1f && !quest.isCompleted) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
                             onClick = onComplete,
@@ -261,7 +262,7 @@ fun QuestCard(
                         ) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Отримати нагороду!")
+                            Text("Отримати нагороду!", color = TextPrimary)
                         }
                     }
                 }
@@ -281,6 +282,9 @@ fun getQuestHint(questTitle: String): String {
         questTitle.contains("💰") -> "💡 Відкрий 'Налаштування' → 'Валюта'"
         questTitle.contains("🔔") -> "💡 Відкрий 'Налаштування' → увімкни 'Сповіщення'"
         questTitle.contains("Перший крок") -> "💡 Додай витрату у вкладці 'Витрати'"
+        questTitle.contains("Економний тиждень") -> "💡 Витрачай менше 500 грн кожен день протягом 7 днів"
+        questTitle.contains("П'ять транзакцій") -> "💡 Додай 5 витрат за сьогодні"
+        questTitle.contains("Місяць економії") -> "💡 Витрачай менше 2000 грн протягом місяця"
         else -> ""
     }
 }

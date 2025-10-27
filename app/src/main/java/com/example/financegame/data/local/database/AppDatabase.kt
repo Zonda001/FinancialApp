@@ -165,23 +165,15 @@ abstract class AppDatabase : RoomDatabase() {
                 ),
                 Quest(
                     title = "Економний тиждень",
-                    description = "Витрачай менше 500 грн на тиждень",
+                    description = "Витрачай менше 500 грн протягом 7 днів поспіль",
                     targetAmount = 500.0,
                     targetDays = 7,
                     reward = 150,
                     questType = QuestType.WEEKLY_GOAL
                 ),
                 Quest(
-                    title = "Без фастфуду",
-                    description = "7 днів без витрат на фастфуд",
-                    category = "Їжа",
-                    targetDays = 7,
-                    reward = 200,
-                    questType = QuestType.NO_SPENDING
-                ),
-                Quest(
                     title = "П'ять транзакцій",
-                    description = "Додай 5 різних витрат за день",
+                    description = "Додай 5 витрат за один день",
                     targetAmount = 5.0,
                     targetDays = 1,
                     reward = 120,

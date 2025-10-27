@@ -94,20 +94,14 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             )
             expenseRepository.insertExpense(expense)
 
-            // Додаємо досвід за додавання витрати
+// Додаємо досвід за додавання витрати
             userRepository.addExperience(1, 10)
 
-            // 🆕 Відстежуємо досягнення
+// 🆕 Відстежуємо досягнення
             achievementTracker.onExpenseAdded()
 
-            // Перевіряємо денні ліміти
-            val calendar = Calendar.getInstance()
-            calendar.set(Calendar.HOUR_OF_DAY, 0)
-            calendar.set(Calendar.MINUTE, 0)
-            val startOfDay = calendar.timeInMillis
-
-            val dailyExpense = expenseRepository.getTotalExpenses(1, startOfDay, System.currentTimeMillis()).first() ?: 0.0
-            achievementTracker.onDailyExpenseCheck(dailyExpense)
+// ✅ ОНОВЛЮЄМО ПРОГРЕС КВЕСТІВ
+            updateQuestProgress()
 
             _showAddDialog.value = false
         }
@@ -125,5 +119,39 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
 
     fun hideAddExpenseDialog() {
         _showAddDialog.value = false
+    }
+    private fun updateQuestProgress() {
+        viewModelScope.launch {
+            // Оновлюємо прогрес всіх активних квестів
+            val activeQuests = database.questDao().getActiveQuests().first()
+
+            activeQuests.forEach { quest ->
+                when (quest.title) {
+                    "Перший крок" -> {
+                        // Перевіряємо чи є хоча б одна витрата
+                        val hasExpenses = database.expenseDao().getAllExpenses(1).first().isNotEmpty()
+                        if (hasExpenses && quest.progress < 1f) {
+                            database.questDao().updateQuestProgress(quest.id, 1f)
+                        }
+                    }
+                    "П'ять транзакцій" -> {
+                        // Рахуємо витрати за сьогодні
+                        val calendar = java.util.Calendar.getInstance()
+                        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        calendar.set(java.util.Calendar.MINUTE, 0)
+                        val startOfDay = calendar.timeInMillis
+
+                        val todayExpenses = database.expenseDao()
+                            .getExpensesByDateRange(1, startOfDay, System.currentTimeMillis())
+                            .first()
+                            .filter { it.type == com.example.financegame.data.local.database.entities.ExpenseType.EXPENSE }
+                            .size
+
+                        val progress = (todayExpenses.toFloat() / 5f).coerceIn(0f, 1f)
+                        database.questDao().updateQuestProgress(quest.id, progress)
+                    }
+                }
+            }
+        }
     }
 }

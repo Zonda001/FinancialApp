@@ -25,6 +25,9 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("QuestPrefs", Context.MODE_PRIVATE)
     private val DAILY_QUEST_PREFIX = "daily_quest_"
 
+    // SharedPreferences для відстеження прогресу квестів
+    private val questProgressPrefs = application.getSharedPreferences("QuestProgressPrefs", Context.MODE_PRIVATE)
+
     // 🆕 Система відстеження досягнень
     private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
 
@@ -87,7 +90,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         activeQuests.value.forEach { quest ->
             when (quest.questType) {
                 QuestType.SAVE_MONEY -> checkSaveMoneyQuest(quest)
-                QuestType.NO_SPENDING -> checkNoSpendingQuest(quest)
+                QuestType.NO_SPENDING -> {} // Видалено
                 QuestType.WEEKLY_GOAL -> checkWeeklyGoalQuest(quest)
                 QuestType.DAILY_LIMIT -> checkDailyLimitQuest(quest)
             }
@@ -97,7 +100,7 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun checkSaveMoneyQuest(quest: Quest) {
         if (quest.title == "Перший крок") {
             expenseRepository.getAllExpenses(1).first().let { expenses ->
-                if (expenses.isNotEmpty() && !quest.isCompleted) {
+                if (expenses.isNotEmpty() && quest.progress < 1f) {
                     questRepository.updateQuestProgress(quest.id, 1f)
                 }
             }
@@ -112,62 +115,128 @@ class QuestViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun checkNoSpendingQuest(quest: Quest) {
-        val now = System.currentTimeMillis()
-        val daysPassed = ((now - quest.startDate) / (24 * 60 * 60 * 1000)).toInt()
-
-        expenseRepository.getExpensesByCategory(1, quest.category).firstOrNull()?.let { expenses ->
-            val expensesInPeriod = expenses.filter {
-                it.date >= quest.startDate && it.date <= now
-            }
-
-            if (expensesInPeriod.isEmpty() && daysPassed >= quest.targetDays) {
-                questRepository.updateQuestProgress(quest.id, 1f)
-            } else {
-                val progress = (daysPassed.toFloat() / quest.targetDays.toFloat()).coerceIn(0f, 1f)
-                questRepository.updateQuestProgress(quest.id, progress)
-            }
-        }
-    }
-
     private suspend fun checkWeeklyGoalQuest(quest: Quest) {
-        val now = System.currentTimeMillis()
-        val endTime = quest.startDate + (quest.targetDays * 24 * 60 * 60 * 1000L)
-        val periodCompleted = now >= endTime
+        val questKey = "quest_${quest.id}_start_date"
+        val streakKey = "quest_${quest.id}_streak_days"
+        val lastCheckKey = "quest_${quest.id}_last_check"
 
-        expenseRepository.getTotalExpenses(1, quest.startDate, endTime).firstOrNull()?.let { total ->
-            val actualTotal = total ?: 0.0
+        val today = getTodayDateString()
+        val lastCheck = questProgressPrefs.getString(lastCheckKey, "") ?: ""
 
-            if (actualTotal <= quest.targetAmount) {
-                if (periodCompleted) {
-                    questRepository.updateQuestProgress(quest.id, 1f)
-                } else {
-                    val timeProgress = ((now - quest.startDate).toFloat() / (endTime - quest.startDate).toFloat()).coerceIn(0f, 0.99f)
-                    questRepository.updateQuestProgress(quest.id, timeProgress)
-                }
-            } else {
-                val moneyProgress = (quest.targetAmount / actualTotal).toFloat().coerceIn(0f, 0.99f)
-                questRepository.updateQuestProgress(quest.id, moneyProgress)
+        // Перевіряємо чи вже перевіряли сьогодні
+        if (lastCheck == today) {
+            return
+        }
+
+        // Отримуємо поточну серію
+        var streakDays = questProgressPrefs.getInt(streakKey, 0)
+        val startDate = questProgressPrefs.getString(questKey, "") ?: ""
+
+        // Якщо перший запуск квесту - встановлюємо дату старту
+        if (startDate.isEmpty()) {
+            questProgressPrefs.edit().apply {
+                putString(questKey, today)
+                putInt(streakKey, 0)
+                apply()
             }
+            return
+        }
+
+        // Перевіряємо витрати за вчора
+        val yesterday = getYesterdayDateString()
+        val yesterdayExpenses = getExpensesForDate(yesterday)
+
+        if (yesterdayExpenses <= quest.targetAmount) {
+            // Витрати в межах ліміту - збільшуємо серію
+            streakDays++
+
+            questProgressPrefs.edit().apply {
+                putInt(streakKey, streakDays)
+                putString(lastCheckKey, today)
+                apply()
+            }
+
+            // Оновлюємо прогрес
+            val progress = (streakDays.toFloat() / quest.targetDays.toFloat()).coerceIn(0f, 1f)
+            questRepository.updateQuestProgress(quest.id, progress)
+
+            // Якщо досягли цілі - квест готовий до завершення
+            if (streakDays >= quest.targetDays && quest.progress < 1f) {
+                questRepository.updateQuestProgress(quest.id, 1f)
+            }
+        } else {
+            // Витрати перевищили ліміт - скидаємо серію
+            questProgressPrefs.edit().apply {
+                putString(questKey, today)
+                putInt(streakKey, 0)
+                putString(lastCheckKey, today)
+                apply()
+            }
+            questRepository.updateQuestProgress(quest.id, 0f)
         }
     }
 
     private suspend fun checkDailyLimitQuest(quest: Quest) {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        val startOfDay = calendar.timeInMillis
+        if (quest.title == "П'ять транзакцій") {
+            val today = getTodayDateString()
+            val todayExpenses = getExpensesCountForDate(today)
 
-        expenseRepository.getTotalExpenses(1, startOfDay, System.currentTimeMillis()).firstOrNull()?.let { total ->
-            val progress = if (total != null && total <= quest.targetAmount) {
-                1f
-            } else {
-                ((quest.targetAmount / (total ?: quest.targetAmount)).toFloat()).coerceIn(0f, 1f)
-            }
+            val progress = (todayExpenses.toFloat() / quest.targetAmount.toFloat()).coerceIn(0f, 1f)
             questRepository.updateQuestProgress(quest.id, progress)
+
+            // Якщо досягли 5 транзакцій - готово до завершення
+            if (todayExpenses >= quest.targetAmount.toInt()) {
+                questRepository.updateQuestProgress(quest.id, 1f)
+            }
         }
     }
+    // Допоміжні функції для роботи з датами та витратами
+    private fun getYesterdayDateString(): String {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)
+        return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
+    }
+    private suspend fun getExpensesForDate(dateString: String): Double {
+        val calendar = parseDateString(dateString)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val startOfDay = calendar.timeInMillis
 
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        val endOfDay = calendar.timeInMillis
+
+        return expenseRepository.getTotalExpenses(1, startOfDay, endOfDay).first() ?: 0.0
+    }
+
+    private suspend fun getExpensesCountForDate(dateString: String): Int {
+        val calendar = parseDateString(dateString)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val startOfDay = calendar.timeInMillis
+
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        val endOfDay = calendar.timeInMillis
+
+        return expenseRepository.getExpensesByDateRange(1, startOfDay, endOfDay)
+            .first()
+            .filter { it.type == com.example.financegame.data.local.database.entities.ExpenseType.EXPENSE }
+            .size
+    }
+
+    private fun parseDateString(dateString: String): Calendar {
+        val parts = dateString.split("-")
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.YEAR, parts[0].toInt())
+        calendar.set(Calendar.MONTH, parts[1].toInt())
+        calendar.set(Calendar.DAY_OF_MONTH, parts[2].toInt())
+        return calendar
+    }
     fun completeQuest(quest: Quest) {
         viewModelScope.launch {
             questRepository.completeQuest(quest.id)

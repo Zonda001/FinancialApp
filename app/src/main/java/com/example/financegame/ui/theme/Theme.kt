@@ -306,41 +306,41 @@ private fun getMoonlightDark() = darkColorScheme(
     onError = TextLight
 )
 
-// ⚫ MONOCHROME
+// ⚫ MONOCHROME - Покращена версія з м'якими відтінками
 private fun getMonochromeLight() = lightColorScheme(
-    primary = Color(0xFF000000),            // Чорний для TopBar та акцентів
-    secondary = Color(0xFF424242),          // Темно-сірий
-    tertiary = Color(0xFF757575),           // Сірий для FAB
-    background = Color(0xFFFFFFFF),         // Білий фон
+    primary = Color(0xFF424242),            // М'який темно-сірий замість чистого чорного
+    secondary = Color(0xFF757575),          // Середній сірий
+    tertiary = Color(0xFF9E9E9E),           // Світло-сірий для акцентів
+    background = Color(0xFFFAFAFA),         // М'який білий (не чистий)
     surface = Color(0xFFF5F5F5),            // Світло-сірий
-    surfaceVariant = Color(0xFFEEEEEE),     // Ще світліший сірий
-    primaryContainer = Color(0xFFE0E0E0),   // Світло-сірий для індикатора/таба
-    onPrimary = Color(0xFFFFFFFF),          // Білий текст на чорному
+    surfaceVariant = Color(0xFFEEEEEE),     // Сірий для карток
+    primaryContainer = Color(0xFFBDBDBD),   // Більш темний сірий для індикатора (більш помітний)
+    onPrimary = Color(0xFFFFFFFF),          // Білий текст на темному
     onSecondary = Color(0xFFFFFFFF),        // Білий текст
-    onBackground = Color(0xFF000000),       // Чорний текст на білому фоні
-    onSurface = Color(0xFF000000),          // Чорний текст
-    onSurfaceVariant = Color(0xFF757575),   // Сірий для невибраних елементів
-    error = Color(0xFF000000),
+    onBackground = Color(0xFF212121),       // М'який чорний текст (не чистий)
+    onSurface = Color(0xFF212121),          // М'який чорний текст
+    onSurfaceVariant = Color(0xFF616161),   // Середній сірий для вторинного тексту
+    error = Color(0xFF616161),              // М'який сірий для помилок
     onError = Color(0xFFFFFFFF),
-    outline = Color(0xFF424242)             // Темніший сірий для обідків
+    outline = Color(0xFFBDBDBD)             // Світло-сірий для обідків
 )
 
 private fun getMonochromeDark() = darkColorScheme(
-    primary = Color(0xFF000000),            // Чорний для TopBar
+    primary = Color(0xFF424242),            // Темно-сірий для TopBar (не чистий чорний)
     secondary = Color(0xFFE0E0E0),          // Світло-сірий
     tertiary = Color(0xFFBDBDBD),           // Сірий для FAB
-    background = Color(0xFF000000),         // Чистий чорний фон
-    surface = Color(0xFF121212),            // Темно-сірий
-    surfaceVariant = Color(0xFF1E1E1E),     // Трохи світліший сірий
-    primaryContainer = Color(0xFF2C2C2C),   // Темно-сірий для індикатора/таба
-    onPrimary = Color(0xFFFFFFFF),          // Білий текст на чорному TopBar
-    onSecondary = Color(0xFF000000),
-    onBackground = Color(0xFFFFFFFF),       // Білий текст на чорному фоні
-    onSurface = Color(0xFFFFFFFF),          // Білий текст
-    onSurfaceVariant = Color(0xFFBDBDBD),   // Світло-сірий для невибраних елементів
-    error = Color(0xFFFFFFFF),
-    onError = Color(0xFF000000),
-    outline = Color(0xFF1E1E1E)             // Темно-сірий для обідків (майже невидимий на чорному)
+    background = Color(0xFF121212),         // М'який чорний фон (не чистий)
+    surface = Color(0xFF1E1E1E),            // Темно-сірий
+    surfaceVariant = Color(0xFF2C2C2C),     // Трохи світліший сірий для карток
+    primaryContainer = Color(0xFF616161),   // Більш світлий сірий для індикатора (більш помітний)
+    onPrimary = Color(0xFFFFFFFF),          // Білий текст на темному TopBar
+    onSecondary = Color(0xFF121212),        // Темний текст на світлому
+    onBackground = Color(0xFFE0E0E0),       // Світло-сірий текст (не чистий білий)
+    onSurface = Color(0xFFE0E0E0),          // Світло-сірий текст
+    onSurfaceVariant = Color(0xFFBDBDBD),   // Середній сірий для вторинного тексту
+    error = Color(0xFFBDBDBD),              // Світло-сірий для помилок
+    onError = Color(0xFF121212),            // Темний текст на світлій помилці
+    outline = Color(0xFF424242)             // Темно-сірий для обідків
 )
 
 @Composable

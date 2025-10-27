@@ -1,6 +1,10 @@
 package com.example.financegame.ui.navigation
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,6 +24,7 @@ import com.example.financegame.ui.screens.quests.QuestsScreen
 import com.example.financegame.ui.screens.reports.ReportsScreen
 import com.example.financegame.ui.screens.settings.SettingsScreen
 import com.example.financegame.ui.screens.settings.SettingsViewModel
+import kotlinx.coroutines.launch
 
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -34,9 +39,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
-    val navController = rememberNavController()
-
-    // Порядок вкладок: Профіль, Витрати, Квести, Досягнення, Звіти, Налаштування
+    // Список екранів у правильному порядку
     val screens = listOf(
         Screen.Profile,
         Screen.Expenses,
@@ -46,16 +49,21 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
         Screen.Settings
     )
 
+    // Стан для HorizontalPager
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { screens.size }
+    )
+
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-
-                screens.forEach { screen ->
+                screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
                         icon = {
                             Icon(
@@ -64,14 +72,11 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
                             )
                         },
                         label = { Text(screen.title) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = pagerState.currentPage == index,
                         onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
+                            scope.launch {
+                                // Використовуємо scrollToPage для миттєвого переходу
+                                pagerState.scrollToPage(index)
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -86,54 +91,57 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Profile.route, // Стартовий екран - Профіль
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(Screen.Profile.route) {
-                ProfileScreen()
-            }
-
-            composable(Screen.Expenses.route) {
-                ExpensesScreen()
-            }
-
-            composable(Screen.Quests.route) {
-                QuestsScreen(
-                    onNavigateToReports = {
-                        navController.navigate(Screen.Reports.route)
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route)
-                    },
-                    onNavigateToAchievements = {
-                        navController.navigate(Screen.Achievements.route)
-                    },
-                    onNavigateToProfile = {
-                        navController.navigate(Screen.Profile.route)
+        Box(modifier = Modifier.fillMaxSize()) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                userScrollEnabled = true,
+                pageSpacing = 0.dp,
+                key = { it }
+            ) { page ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (page) {
+                        0 -> ProfileScreen()
+                        1 -> ExpensesScreen()
+                        2 -> QuestsScreen(
+                            onNavigateToReports = {
+                                scope.launch {
+                                    pagerState.scrollToPage(4)
+                                }
+                            },
+                            onNavigateToSettings = {
+                                scope.launch {
+                                    pagerState.scrollToPage(5)
+                                }
+                            },
+                            onNavigateToAchievements = {
+                                scope.launch {
+                                    pagerState.scrollToPage(3)
+                                }
+                            },
+                            onNavigateToProfile = {
+                                scope.launch {
+                                    pagerState.scrollToPage(0)
+                                }
+                            }
+                        )
+                        3 -> AchievementsScreen()
+                        4 -> ReportsScreen()
+                        5 -> {
+                            if (settingsViewModel != null) {
+                                SettingsScreen(
+                                    viewModel = settingsViewModel,
+                                    onThemeChanged = { /* Автоматично оновиться */ }
+                                )
+                            } else {
+                                SettingsScreen(
+                                    onThemeChanged = { /* Автоматично оновиться */ }
+                                )
+                            }
+                        }
                     }
-                )
-            }
-
-            composable(Screen.Achievements.route) {
-                AchievementsScreen()
-            }
-
-            composable(Screen.Reports.route) {
-                ReportsScreen()
-            }
-
-            composable(Screen.Settings.route) {
-                if (settingsViewModel != null) {
-                    SettingsScreen(
-                        viewModel = settingsViewModel,
-                        onThemeChanged = { /* Автоматично оновиться */ }
-                    )
-                } else {
-                    SettingsScreen(
-                        onThemeChanged = { /* Автоматично оновиться */ }
-                    )
                 }
             }
         }

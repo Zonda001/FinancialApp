@@ -56,6 +56,7 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
     )
 
     val scope = rememberCoroutineScope()
+    var isPagerScrollEnabled by remember { mutableStateOf(true) }
 
     Scaffold(
         bottomBar = {
@@ -97,7 +98,7 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                userScrollEnabled = true,
+                userScrollEnabled = isPagerScrollEnabled,
                 pageSpacing = 0.dp,
                 key = { it }
             ) { page ->

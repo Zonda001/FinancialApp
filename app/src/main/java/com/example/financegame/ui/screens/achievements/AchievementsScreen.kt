@@ -27,6 +27,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.local.database.entities.Achievement
 import com.example.financegame.data.local.database.entities.AchievementCategory
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
+
 import com.example.financegame.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -196,6 +202,25 @@ fun CategoryFiltersScroll(
     selectedCategory: AchievementCategory?,
     onCategorySelected: (AchievementCategory?) -> Unit
 ) {
+    // Створюємо NestedScrollConnection, який НЕ передає горизонтальний скрол далі
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                // Споживаємо залишковий горизонтальний скрол, щоб він не пішов до HorizontalPager
+                return Offset(available.x, 0f)
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                // Споживаємо залишковий горизонтальний fling
+                return Velocity(available.x, 0f)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -209,7 +234,8 @@ fun CategoryFiltersScroll(
         )
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.nestedScroll(nestedScrollConnection)
         ) {
             // Кнопка "Всі"
             item {

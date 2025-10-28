@@ -28,6 +28,11 @@ import com.example.financegame.ui.theme.TextPrimary
 import com.example.financegame.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,6 +127,25 @@ fun PeriodSelector(
     selectedPeriod: ReportPeriod,
     onPeriodSelected: (ReportPeriod) -> Unit
 ) {
+    // Створюємо NestedScrollConnection, який НЕ передає горизонтальний скрол далі
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                // Споживаємо залишковий горизонтальний скрол
+                return Offset(available.x, 0f)
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                // Споживаємо залишковий горизонтальний fling
+                return Velocity(available.x, 0f)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -135,7 +159,8 @@ fun PeriodSelector(
         )
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.nestedScroll(nestedScrollConnection)
         ) {
             items(ReportPeriod.values()) { period ->
                 FilterChip(

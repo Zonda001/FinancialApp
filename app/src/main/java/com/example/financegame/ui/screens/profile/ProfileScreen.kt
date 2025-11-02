@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -76,128 +77,166 @@ fun ProfileScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            user?.let { currentUser ->
-                // Аватар
-                Box(
-                    modifier = Modifier
-                        .size(140.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary
+            item {
+                user?.let { currentUser ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Аватар
+                        Box(
+                            modifier = Modifier
+                                .size(140.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    )
                                 )
+                                .border(
+                                    width = 4.dp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape
+                                )
+                                .clickable { showEditDialog = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (currentUser.avatarUrl.isNotEmpty())
+                                    currentUser.avatarUrl
+                                else
+                                    currentUser.name.firstOrNull()?.uppercase() ?: "?",
+                                style = MaterialTheme.typography.displayLarge,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Ім'я користувача
+                        Text(
+                            text = currentUser.name,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
                         )
-                        .border(
-                            width = 4.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
-                        )
-                        .clickable { showEditDialog = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (currentUser.avatarUrl.isNotEmpty())
-                            currentUser.avatarUrl
-                        else
-                            currentUser.name.firstOrNull()?.uppercase() ?: "?",
-                        style = MaterialTheme.typography.displayLarge,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Рівень
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = "Рівень",
+                                tint = GoldColor,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Рівень ${currentUser.level}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GoldColor
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Прогрес бар досвіду
+            item {
+                user?.let { currentUser ->
+                    ExperienceProgressCard(
+                        currentExp = currentUser.experience,
+                        level = currentUser.level,
+                        onExpNeeded = viewModel::getExperienceForNextLevel
                     )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            // Статистика
+            item {
+                user?.let { currentUser ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Перший рядок
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            StatCard(
+                                title = "Досвід",
+                                value = currentUser.experience.toString(),
+                                icon = Icons.Default.EmojiEvents,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                title = "Бали",
+                                value = currentUser.totalPoints.toString(),
+                                icon = Icons.Default.Stars,
+                                color = GoldColor,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
 
-                // Ім'я користувача
-                Text(
-                    text = currentUser.name,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                        // Другий рядок
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            StatCard(
+                                title = "Досягнення",
+                                value = achievementsCount.toString(),
+                                icon = Icons.Default.MilitaryTech,
+                                color = AccentOrange,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                title = "Серія днів",
+                                value = currentStreak.toString(),
+                                icon = Icons.Default.LocalFireDepartment,
+                                color = AccentOrange,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Нагорода за стрік
+            item {
+                StreakRewardCard(
+                    currentStreak = currentStreak,
+                    onClaimReward = {
+                        viewModel.claimStreakReward(currentStreak)
+                    }
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Рівень
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        Icons.Default.Star,
-                        contentDescription = "Рівень",
-                        tint = GoldColor,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Рівень ${currentUser.level}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = GoldColor
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Прогрес бар досвіду
-                ExperienceProgressCard(
-                    currentExp = currentUser.experience,
-                    level = currentUser.level,
-                    onExpNeeded = viewModel::getExperienceForNextLevel
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Статистика
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    StatCard(
-                        title = "Досвід",
-                        value = currentUser.experience.toString(),
-                        icon = Icons.Default.EmojiEvents,
-                        color = TextPrimary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        title = "Бали",
-                        value = currentUser.totalPoints.toString(),
-                        icon = Icons.Default.Stars,
-                        color = GoldColor,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        title = "Досягнення",
-                        value = "$achievementsCount",
-                        icon = Icons.Default.MilitaryTech,
-                        color = AccentOrange,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        title = "Серія днів",
-                        value = "$currentStreak",
-                        icon = Icons.Default.LocalFireDepartment,
-                        color = AccentOrange,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                }
             }
         }
     }
+
     // Діалог редагування профілю
     if (showEditDialog && user != null) {
         EditProfileDialog(
@@ -209,6 +248,196 @@ fun ProfileScreen(
                 showEditDialog = false
             }
         )
+    }
+}
+
+// Картка прогресу стріку з нагородою
+@Composable
+fun StreakRewardCard(
+    currentStreak: Int,
+    onClaimReward: () -> Unit
+) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("StreakRewards", Context.MODE_PRIVATE) }
+
+    // Отримуємо останній рівень, за який було отримано нагороду
+    var lastClaimedLevel by remember { mutableStateOf(prefs.getInt("last_claimed_level", 0)) }
+
+    // Обчислюємо поточний рівень стріку (кожні 5 днів = 1 рівень)
+    val currentLevel = currentStreak / 5
+
+    // Прогрес до наступної нагороди (0.0 - 1.0)
+    val progress = (currentStreak % 5) / 5f
+
+    // Чи можна отримати нагороду?
+    val canClaimReward = currentLevel > lastClaimedLevel && currentStreak >= 5
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (canClaimReward)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(if (canClaimReward) 6.dp else 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = AccentOrange,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            "Нагорода за стрік",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            if (canClaimReward)
+                                "Натисни щоб отримати!"
+                            else
+                                "${currentStreak % 5}/5 днів до нагороди",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (canClaimReward)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                TextSecondary
+                        )
+                    }
+                }
+
+                if (!canClaimReward) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Stars,
+                            contentDescription = null,
+                            tint = GoldColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "+100",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = GoldColor
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (canClaimReward) {
+                // КНОПКА ОТРИМАННЯ НАГОРОДИ
+                Button(
+                    onClick = {
+                        onClaimReward()
+                        // Зберігаємо поточний рівень як останній отриманий
+                        prefs.edit().putInt("last_claimed_level", currentLevel).apply()
+                        lastClaimedLevel = currentLevel
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.CardGiftcard,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Отримати +100 балів",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                // ПРОГРЕС БАР
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        AccentOrange,
+                                        AccentOrange.copy(alpha = 0.7f)
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Залишилось ${5 - (currentStreak % 5)} днів",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Text(
+                        "${(progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AccentOrange,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // Інформація про отримані нагороди
+            if (lastClaimedLevel > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Отримано нагород: $lastClaimedLevel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Text(
+                        "Всього балів: ${lastClaimedLevel * 100}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GoldColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -325,14 +554,14 @@ fun StatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.height(110.dp),
+        modifier = modifier.height(90.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -340,12 +569,12 @@ fun StatCard(
                 icon,
                 contentDescription = title,
                 tint = color,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 value,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
@@ -354,7 +583,8 @@ fun StatCard(
                 title,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
+                maxLines = 1,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f
             )
         }
     }
@@ -501,10 +731,12 @@ fun EditProfileDialog(
         }
     }
 }
+
 private fun getTodayDateString(): String {
     val calendar = java.util.Calendar.getInstance()
     return "${calendar.get(java.util.Calendar.YEAR)}-${calendar.get(java.util.Calendar.MONTH)}-${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
 }
+
 private fun getYesterdayDateString(): String {
     val calendar = java.util.Calendar.getInstance()
     calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)

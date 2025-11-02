@@ -1,6 +1,7 @@
 package com.example.financegame.ui.screens.profile
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financegame.data.local.database.AppDatabase
@@ -14,6 +15,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val database = AppDatabase.getDatabase(application)
     private val userRepository = UserRepository(database.userDao())
     private val achievementRepository = AchievementRepository(database.achievementDao())
+
+    // SharedPreferences для нагород за стрік
+    private val streakRewardPrefs = application.getSharedPreferences("StreakRewards", Context.MODE_PRIVATE)
 
     val currentUser: StateFlow<User?> = userRepository.getCurrentUser()
         .stateIn(
@@ -71,6 +75,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                         totalPoints = newTotalPoints
                     )
                 )
+            }
+        }
+    }
+
+    // ✅ НОВА ФУНКЦІЯ: Отримання нагороди за стрік
+    fun claimStreakReward(currentStreak: Int) {
+        viewModelScope.launch {
+            currentUser.value?.let { user ->
+                val rewardPoints = 100
+                val currentLevel = currentStreak / 5
+
+                // Додаємо бали користувачу
+                val newTotalPoints = user.totalPoints + rewardPoints
+
+                userRepository.updateUser(
+                    user.copy(
+                        totalPoints = newTotalPoints
+                    )
+                )
+
+                // Зберігаємо рівень отриманої нагороди
+                streakRewardPrefs.edit().putInt("last_claimed_level", currentLevel).apply()
             }
         }
     }

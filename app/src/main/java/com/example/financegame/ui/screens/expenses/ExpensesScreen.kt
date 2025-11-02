@@ -1,5 +1,5 @@
-package com.example.financegame.ui.screens.expenses
 
+package com.example.financegame.ui.screens.expenses
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
@@ -42,7 +41,6 @@ fun ExpensesScreen(
     val showAddDialog by viewModel.showAddDialog.collectAsState()
     val expenseLimit by viewModel.expenseLimit.collectAsState()
     var showLimitDialog by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var currency by remember { mutableStateOf("грн") }
@@ -93,7 +91,6 @@ fun ExpensesScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Карта лімітів витрат
             ExpenseLimitCard(
                 currentExpenses = monthExpenses,
                 expenseLimit = expenseLimit,
@@ -145,7 +142,6 @@ fun ExpensesScreen(
         )
     }
 }
-
 @Composable
 fun ExpenseLimitCard(
     currentExpenses: Double,
@@ -158,7 +154,6 @@ fun ExpenseLimitCard(
     } else {
         0f
     }
-
     val progressColor = when {
         progress < 0.5f -> MaterialTheme.colorScheme.tertiary
         progress < 0.75f -> MaterialTheme.colorScheme.secondary
@@ -232,7 +227,6 @@ fun ExpenseLimitCard(
             if (expenseLimit > 0) {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Прогрес бар
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -288,7 +282,6 @@ fun ExpenseLimitCard(
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SetExpenseLimitDialog(
@@ -300,7 +293,6 @@ fun SetExpenseLimitDialog(
     var limitText by remember {
         mutableStateOf(if (currentLimit > 0) currentLimit.toInt().toString() else "")
     }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -383,7 +375,6 @@ fun SetExpenseLimitDialog(
         }
     )
 }
-
 @Composable
 fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: String) {
     Card(
@@ -475,11 +466,13 @@ fun BalanceCard(income: Double, expenses: Double, balance: Double, currency: Str
         }
     }
 }
-
 @Composable
 fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val categoryColor = getCategoryColor(expense.category)
+// ✅ Для доходів використовуємо фіксовану категорію "Дохід" з емодзі 💰
+    val displayCategory = if (expense.type == ExpenseType.INCOME) "Дохід" else expense.category
+    val categoryIcon = if (expense.type == ExpenseType.INCOME) "💰" else getCategoryIcon(expense.category)
+    val categoryColor = if (expense.type == ExpenseType.INCOME) QuestActiveColor else getCategoryColor(expense.category)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -505,7 +498,7 @@ fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        getCategoryIcon(expense.category),
+                        categoryIcon,
                         style = MaterialTheme.typography.headlineMedium
                     )
                 }
@@ -514,7 +507,7 @@ fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
 
                 Column {
                     Text(
-                        expense.category,
+                        displayCategory,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -558,7 +551,7 @@ fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Видалити витрату?") },
+            title = { Text("Видалити ${if (expense.type == ExpenseType.INCOME) "дохід" else "витрату"}?") },
             text = { Text("Ця дія незворотна") },
             confirmButton = {
                 TextButton(
@@ -578,7 +571,6 @@ fun ExpenseCard(expense: Expense, currency: String, onDelete: () -> Unit) {
         )
     }
 }
-
 @Composable
 fun EmptyExpensesPlaceholder() {
     Box(
@@ -609,7 +601,6 @@ fun EmptyExpensesPlaceholder() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseDialog(
@@ -622,7 +613,6 @@ fun AddExpenseDialog(
     var selectedType by remember { mutableStateOf(ExpenseType.EXPENSE) }
     var description by remember { mutableStateOf("") }
     var showCategoryMenu by remember { mutableStateOf(false) }
-
     AlertDialog(
         onDismissRequest = onDismiss
     ) {
@@ -680,43 +670,46 @@ fun AddExpenseDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                ExposedDropdownMenuBox(
-                    expanded = showCategoryMenu,
-                    onExpandedChange = { showCategoryMenu = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Категорія") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
+                // ✅ ПОКАЗУЄМО ВИБІР КАТЕГОРІЇ ТІЛЬКИ ДЛЯ ВИТРАТ
+                if (selectedType == ExpenseType.EXPENSE) {
+                    ExposedDropdownMenuBox(
                         expanded = showCategoryMenu,
-                        onDismissRequest = { showCategoryMenu = false }
+                        onExpandedChange = { showCategoryMenu = it }
                     ) {
-                        DefaultCategories.categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(category.icon)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(category.name)
+                        OutlinedTextField(
+                            value = selectedCategory,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Категорія") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = showCategoryMenu,
+                            onDismissRequest = { showCategoryMenu = false }
+                        ) {
+                            DefaultCategories.categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(category.icon)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(category.name)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedCategory = category.name
+                                        showCategoryMenu = false
                                     }
-                                },
-                                onClick = {
-                                    selectedCategory = category.name
-                                    showCategoryMenu = false
-                                }
-                            )
+                                )
+                            }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 OutlinedTextField(
                     value = description,
@@ -740,7 +733,9 @@ fun AddExpenseDialog(
                         onClick = {
                             val amountValue = amount.toDoubleOrNull()
                             if (amountValue != null && amountValue > 0) {
-                                onConfirm(amountValue, selectedCategory, selectedType, description)
+                                // ✅ ДЛЯ ДОХОДІВ ВИКОРИСТОВУЄМО ФІКСОВАНУ КАТЕГОРІЮ "Дохід"
+                                val finalCategory = if (selectedType == ExpenseType.INCOME) "Дохід" else selectedCategory
+                                onConfirm(amountValue, finalCategory, selectedType, description)
                             }
                         },
                         enabled = amount.toDoubleOrNull() != null && amount.toDoubleOrNull()!! > 0
@@ -752,16 +747,13 @@ fun AddExpenseDialog(
         }
     }
 }
-
 fun formatCurrency(amount: Double, currency: String): String {
     return String.format("%.2f %s", amount, currency)
 }
-
 fun formatDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
 }
-
 fun getCategoryColor(category: String): androidx.compose.ui.graphics.Color {
     return when (category) {
         "Їжа" -> FoodColor
@@ -774,7 +766,6 @@ fun getCategoryColor(category: String): androidx.compose.ui.graphics.Color {
         else -> OtherColor
     }
 }
-
 fun getCategoryIcon(category: String): String {
     return DefaultCategories.categories.find { it.name == category }?.icon ?: "💰"
 }

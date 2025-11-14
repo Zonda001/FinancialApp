@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.ui.screens.auth.avatarsList
 import com.example.financegame.ui.theme.*
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +39,12 @@ fun ProfileScreen(
 ) {
     val user by viewModel.currentUser.collectAsState()
     val achievementsCount by viewModel.unlockedAchievementsCount.collectAsState()
+    val piggyBankGoal by viewModel.piggyBankGoal.collectAsState()
+    val currentBalance by viewModel.currentBalance.collectAsState()
+
     var showEditDialog by remember { mutableStateOf(false) }
+    var showPiggyBankDialog by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val streakPrefs = remember { context.getSharedPreferences("StreakPrefs", Context.MODE_PRIVATE) }
     val currentStreak = remember {
@@ -44,7 +52,6 @@ fun ProfileScreen(
         val today = getTodayDateString()
         val yesterday = getYesterdayDateString()
 
-        // Якщо остання активність не була вчора чи сьогодні - скидаємо серію
         if (lastStreakDate != today && lastStreakDate != yesterday && lastStreakDate.isNotEmpty()) {
             streakPrefs.edit().apply {
                 putInt("current_streak", 0)
@@ -125,7 +132,6 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Ім'я користувача
                         Text(
                             text = currentUser.name,
                             style = MaterialTheme.typography.headlineMedium,
@@ -136,7 +142,6 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Рівень
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
@@ -159,7 +164,6 @@ fun ProfileScreen(
                 }
             }
 
-            // Прогрес бар досвіду
             item {
                 user?.let { currentUser ->
                     ExperienceProgressCard(
@@ -170,7 +174,6 @@ fun ProfileScreen(
                 }
             }
 
-            // Статистика
             item {
                 user?.let { currentUser ->
                     Column(
@@ -178,7 +181,6 @@ fun ProfileScreen(
                             .padding(horizontal = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Перший рядок
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .padding(horizontal = 10.dp),
@@ -200,7 +202,6 @@ fun ProfileScreen(
                             )
                         }
 
-                        // Другий рядок
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .padding(horizontal = 10.dp),
@@ -225,7 +226,6 @@ fun ProfileScreen(
                 }
             }
 
-            // Нагорода за стрік
             item {
                 StreakRewardCard(
                     currentStreak = currentStreak,
@@ -234,10 +234,22 @@ fun ProfileScreen(
                     }
                 )
             }
+
+            // 🆕 КОПІЛКА - НОВА СЕКЦІЯ
+            item {
+                PiggyBankCard(
+                    currentBalance = currentBalance,
+                    goalAmount = piggyBankGoal.amount,
+                    goalName = piggyBankGoal.name,
+                    onSetGoal = { showPiggyBankDialog = true },
+                    onClaimReward = {
+                        viewModel.claimPiggyBankReward()
+                    }
+                )
+            }
         }
     }
 
-    // Діалог редагування профілю
     if (showEditDialog && user != null) {
         EditProfileDialog(
             currentName = user!!.name,
@@ -249,9 +261,369 @@ fun ProfileScreen(
             }
         )
     }
+
+    if (showPiggyBankDialog) {
+        SetPiggyBankGoalDialog(
+            currentGoal = piggyBankGoal,
+            onDismiss = { showPiggyBankDialog = false },
+            onSave = { name, amount ->
+                viewModel.setPiggyBankGoal(name, amount)
+                showPiggyBankDialog = false
+            }
+        )
+    }
 }
 
-// Картка прогресу стріку з нагородою
+// 🆕 КАРТКА КОПІЛКИ
+@Composable
+fun PiggyBankCard(
+    currentBalance: Double,
+    goalAmount: Double,
+    goalName: String,
+    onSetGoal: () -> Unit,
+    onClaimReward: () -> Unit
+) {
+    val progress = if (goalAmount > 0) {
+        (currentBalance / goalAmount).toFloat().coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+
+    val goalReached = currentBalance >= goalAmount && goalAmount > 0
+
+    // Анімація для копілки
+    val infiniteTransition = rememberInfiniteTransition(label = "piggy")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (goalReached) 1.1f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (goalReached)
+                GoldColor.copy(alpha = 0.2f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(if (goalReached) 8.dp else 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "🐷",
+                        style = MaterialTheme.typography.displayMedium,
+                        modifier = if (goalReached) {
+                            Modifier.graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "Віртуальна копілка",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (goalAmount > 0) {
+                            Text(
+                                goalName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        } else {
+                            Text(
+                                "Натисни щоб встановити ціль",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+
+                IconButton(onClick = onSetGoal) {
+                    Icon(
+                        if (goalAmount > 0) Icons.Default.Edit else Icons.Default.Add,
+                        contentDescription = null,
+                        tint = if (goalReached) GoldColor else TextSecondary
+                    )
+                }
+            }
+
+            if (goalAmount > 0) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Прогрес бар
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = if (goalReached) {
+                                        listOf(GoldColor, GoldColor.copy(alpha = 0.7f))
+                                    } else {
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                )
+                            )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            "Зібрано",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Text(
+                            String.format("%.2f грн", currentBalance),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (goalReached) GoldColor else MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            "Ціль",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Text(
+                            String.format("%.2f грн", goalAmount),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (goalReached) {
+                    Button(
+                        onClick = onClaimReward,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldColor
+                        )
+                    ) {
+                        Icon(Icons.Default.CardGiftcard, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "🎉 Отримати нагороду +200 XP",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "${(progress * 100).toInt()}% виконано",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        if (currentBalance < goalAmount) {
+                            Text(
+                                "Залишилось: ${String.format("%.2f грн", goalAmount - currentBalance)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    "💡 Підказка: Заробляй більше доходів ніж витрат, щоб швидше досягти мети!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+// 🆕 ДІАЛОГ ВСТАНОВЛЕННЯ ЦІЛІ КОПІЛКИ
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SetPiggyBankGoalDialog(
+    currentGoal: PiggyBankGoal,
+    onDismiss: () -> Unit,
+    onSave: (String, Double) -> Unit
+) {
+    var goalName by remember { mutableStateOf(currentGoal.name) }
+    var goalAmount by remember {
+        mutableStateOf(if (currentGoal.amount > 0) currentGoal.amount.toInt().toString() else "")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🐷", style = MaterialTheme.typography.displaySmall)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Встановити ціль копілки",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    "Встанови фінансову ціль та заощаджуй гроші. При досягненні мети отримаєш +200 XP!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = goalName,
+                    onValueChange = { if (it.length <= 30) goalName = it },
+                    label = { Text("Назва цілі") },
+                    placeholder = { Text("Наприклад: Новий телефон") },
+                    leadingIcon = {
+                        Icon(Icons.Default.FlagCircle, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    "${goalName.length}/30 символів",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = goalAmount,
+                    onValueChange = { goalAmount = it },
+                    label = { Text("Сума (грн)") },
+                    leadingIcon = {
+                        Icon(Icons.Default.MonetizationOn, contentDescription = null)
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    "💡 Копілка автоматично наповнюється різницею між твоїми доходами та витратами",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    if (currentGoal.amount > 0) {
+                        TextButton(
+                            onClick = {
+                                onSave("", 0.0)
+                            }
+                        ) {
+                            Text("Скинути", color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    TextButton(onClick = onDismiss) {
+                        Text("Скасувати")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val amount = goalAmount.toDoubleOrNull()
+                            if (goalName.isNotBlank() && amount != null && amount > 0) {
+                                onSave(goalName, amount)
+                            }
+                        },
+                        enabled = goalName.isNotBlank() &&
+                                goalAmount.toDoubleOrNull() != null &&
+                                goalAmount.toDoubleOrNull()!! > 0
+                    ) {
+                        Text("Зберегти")
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Решта коду залишається без змін...
+// (StreakRewardCard, ExperienceProgressCard, StatCard, EditProfileDialog)
+
 @Composable
 fun StreakRewardCard(
     currentStreak: Int,
@@ -260,16 +632,9 @@ fun StreakRewardCard(
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("StreakRewards", Context.MODE_PRIVATE) }
 
-    // Отримуємо останній рівень, за який було отримано нагороду
     var lastClaimedLevel by remember { mutableStateOf(prefs.getInt("last_claimed_level", 0)) }
-
-    // Обчислюємо поточний рівень стріку (кожні 5 днів = 1 рівень)
     val currentLevel = currentStreak / 5
-
-    // Прогрес до наступної нагороди (0.0 - 1.0)
     val progress = (currentStreak % 5) / 5f
-
-    // Чи можна отримати нагороду?
     val canClaimReward = currentLevel > lastClaimedLevel && currentStreak >= 5
 
     Card(
@@ -344,11 +709,9 @@ fun StreakRewardCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             if (canClaimReward) {
-                // КНОПКА ОТРИМАННЯ НАГОРОДИ
                 Button(
                     onClick = {
                         onClaimReward()
-                        // Зберігаємо поточний рівень як останній отриманий
                         prefs.edit().putInt("last_claimed_level", currentLevel).apply()
                         lastClaimedLevel = currentLevel
                     },
@@ -370,7 +733,6 @@ fun StreakRewardCard(
                     )
                 }
             } else {
-                // ПРОГРЕС БАР
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -414,7 +776,6 @@ fun StreakRewardCard(
                 }
             }
 
-            // Інформація про отримані нагороди
             if (lastClaimedLevel > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Divider()
@@ -491,7 +852,6 @@ fun ExperienceProgressCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Прогрес лінія
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -621,7 +981,6 @@ fun EditProfileDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Вибрана аватарка
                 Box(
                     modifier = Modifier
                         .size(80.dp)
@@ -640,7 +999,6 @@ fun EditProfileDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Сітка аватарок
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -685,7 +1043,6 @@ fun EditProfileDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Ім'я
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { if (it.length <= 20) newName = it },
@@ -707,7 +1064,6 @@ fun EditProfileDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Кнопки
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

@@ -12,8 +12,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [User::class, Expense::class, Quest::class, Achievement::class],
-    version = 1,
+    entities = [
+        User::class,
+        Expense::class,
+        Quest::class,
+        Achievement::class,
+        TradingPosition::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -21,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
     abstract fun questDao(): QuestDao
     abstract fun achievementDao(): AchievementDao
+    abstract fun tradingDao(): TradingDao
 
     companion object {
         @Volatile
@@ -339,4 +346,5 @@ abstract class AppDatabase : RoomDatabase() {
             achievements.forEach { achievementDao.insertAchievement(it) }
         }
     }
+
 }

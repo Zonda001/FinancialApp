@@ -11,12 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.financegame.ui.screens.achievements.AchievementsScreen
 import com.example.financegame.ui.screens.expenses.ExpensesScreen
 import com.example.financegame.ui.screens.profile.ProfileScreen
@@ -24,11 +18,14 @@ import com.example.financegame.ui.screens.quests.QuestsScreen
 import com.example.financegame.ui.screens.reports.ReportsScreen
 import com.example.financegame.ui.screens.settings.SettingsScreen
 import com.example.financegame.ui.screens.settings.SettingsViewModel
+import com.example.financegame.ui.screens.trading.TradingScreen
 import kotlinx.coroutines.launch
 
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Profile : Screen("profile", "Профіль", Icons.Default.Person)
+
+    object Trading : Screen("trading", "Trading", Icons.Default.ShowChart)
     object Expenses : Screen("expenses", "Витрати", Icons.Default.AccountBalanceWallet)
     object Quests : Screen("quests", "Квести", Icons.Default.EmojiEvents)
     object Achievements : Screen("achievements", "Досягнення", Icons.Default.Stars)
@@ -39,9 +36,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
-    // Список екранів у правильному порядку
     val screens = listOf(
         Screen.Profile,
+        Screen.Trading,
         Screen.Expenses,
         Screen.Quests,
         Screen.Achievements,
@@ -49,7 +46,6 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
         Screen.Settings
     )
 
-    // Стан для HorizontalPager
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { screens.size }
@@ -105,41 +101,25 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (page) {
                         0 -> ProfileScreen()
-                        1 -> ExpensesScreen()
-                        2 -> QuestsScreen(
-                            onNavigateToReports = {
-                                scope.launch {
-                                    pagerState.scrollToPage(4)
-                                }
-                            },
-                            onNavigateToSettings = {
-                                scope.launch {
-                                    pagerState.scrollToPage(5)
-                                }
-                            },
-                            onNavigateToAchievements = {
-                                scope.launch {
-                                    pagerState.scrollToPage(3)
-                                }
-                            },
-                            onNavigateToProfile = {
-                                scope.launch {
-                                    pagerState.scrollToPage(0)
-                                }
-                            }
+                        1 -> TradingScreen()  // ⬅️ ДОДАЙТЕ
+                        2 -> ExpensesScreen()
+                        3 -> QuestsScreen(
+                            onNavigateToReports = { scope.launch { pagerState.scrollToPage(5) } },
+                            onNavigateToSettings = { scope.launch { pagerState.scrollToPage(6) } },
+                            onNavigateToAchievements = { scope.launch { pagerState.scrollToPage(4) } },
+                            onNavigateToProfile = { scope.launch { pagerState.scrollToPage(0) } }
                         )
-                        3 -> AchievementsScreen()
-                        4 -> ReportsScreen()
-                        5 -> {
+
+                        4 -> AchievementsScreen()
+                        5 -> ReportsScreen()
+                        6 -> {
                             if (settingsViewModel != null) {
                                 SettingsScreen(
                                     viewModel = settingsViewModel,
-                                    onThemeChanged = { /* Автоматично оновиться */ }
+                                    onThemeChanged = { }
                                 )
                             } else {
-                                SettingsScreen(
-                                    onThemeChanged = { /* Автоматично оновиться */ }
-                                )
+                                SettingsScreen(onThemeChanged = { })
                             }
                         }
                     }

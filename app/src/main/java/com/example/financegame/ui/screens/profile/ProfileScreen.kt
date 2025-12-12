@@ -580,49 +580,63 @@ fun SetPiggyBankGoalDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary.copy(alpha = 0.7f)
                 )
-
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Row(
+// Кнопки в колонці для кращого відображення
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (currentGoal.amount > 0) {
-                        TextButton(
-                            onClick = {
-                                onSave("", 0.0)
-                            }
-                        ) {
-                            Text("Скинути", color = MaterialTheme.colorScheme.error)
+                    // Основні кнопки
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = onDismiss) {
+                            Text("Скасувати")
                         }
                         Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                val amount = goalAmount.toDoubleOrNull()
+                                if (goalName.isNotBlank() && amount != null && amount > 0) {
+                                    onSave(goalName, amount)
+                                }
+                            },
+                            enabled = goalName.isNotBlank() &&
+                                    goalAmount.toDoubleOrNull() != null &&
+                                    goalAmount.toDoubleOrNull()!! > 0
+                        ) {
+                            Text("Зберегти")
+                        }
                     }
 
-                    TextButton(onClick = onDismiss) {
-                        Text("Скасувати")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            val amount = goalAmount.toDoubleOrNull()
-                            if (goalName.isNotBlank() && amount != null && amount > 0) {
-                                onSave(goalName, amount)
-                            }
-                        },
-                        enabled = goalName.isNotBlank() &&
-                                goalAmount.toDoubleOrNull() != null &&
-                                goalAmount.toDoubleOrNull()!! > 0
-                    ) {
-                        Text("Зберегти")
+                    // Кнопка "Скинути" окремо знизу
+                    if (currentGoal.amount > 0) {
+                        OutlinedButton(
+                            onClick = {
+                                onSave("", 0.0)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Скинути ціль")
+                        }
                     }
                 }
             }
         }
     }
 }
-
-// Решта коду залишається без змін...
-// (StreakRewardCard, ExperienceProgressCard, StatCard, EditProfileDialog)
 
 @Composable
 fun StreakRewardCard(

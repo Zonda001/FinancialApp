@@ -63,6 +63,7 @@ dependencies {
     // Navigation для Compose
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation(libs.androidx.compose.ui.unit)
+    implementation(libs.androidx.compose.foundation)
 
     // Room Database
     val room_version = "2.6.1"

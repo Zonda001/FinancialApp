@@ -4,6 +4,7 @@ import com.example.financegame.data.api.PriceApiService
 import com.example.financegame.data.local.database.dao.TradingDao
 import com.example.financegame.data.local.database.entities.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class TradingRepository(
     private val tradingDao: TradingDao,
@@ -31,13 +32,8 @@ class TradingRepository(
     suspend fun updatePosition(position: TradingPosition) =
         tradingDao.updatePosition(position)
 
-    // ✅ ВИПРАВЛЕНО: Оновлюємо позицію з правильним P/L
-    suspend fun closePosition(positionId: Int, status: PositionStatus, profitLoss: Int) {
-        // Оновлюємо статус та P/L
+    suspend fun closePosition(positionId: Int, status: PositionStatus, profitLoss: Int) =
         tradingDao.closePosition(positionId, status, profitLoss)
-
-        println("💾 Position saved to history: ID=$positionId, Status=${status.name}, P/L=$profitLoss")
-    }
 
     // ======================== PRICES ========================
 
@@ -56,31 +52,33 @@ class TradingRepository(
         }
     }
 
+    // ======================== STATISTICS ========================
+
+    fun getTotalProfitLoss(userId: Int): Flow<Int?> =
+        tradingDao.getTotalProfitLoss(userId)
+
+    fun getWonPositionsCount(userId: Int): Flow<Int> =
+        tradingDao.getWonPositionsCount(userId)
+
+    fun getLostPositionsCount(userId: Int): Flow<Int> =
+        tradingDao.getLostPositionsCount(userId)
+
     // ======================== CALCULATIONS ========================
 
     /**
-     * ✅ ВИПРАВЛЕНО: Розрахунок прибутку/збитку для позиції з 10x леверіджем
+     * Розрахувати прибуток/збиток для позиції з 10x леверіджем
      *
      * Формула: P/L = ставка × зміна_ціни% × 10
      *
      * Приклад:
      * - Ставка: 100 балів
-     * - Ціна входу: 1000
-     * - Поточна ціна: 1020 (+2%)
+     * - Зміна ціни: +2%
      * - LONG: 100 × 2% × 10 = +20 балів
      * - SHORT: 100 × (-2%) × 10 = -20 балів
      */
     fun calculateProfitLoss(position: TradingPosition): Int {
         val priceChange = position.currentPrice - position.entryPrice
         val changePercent = (priceChange / position.entryPrice) * 100
-
-        println("📊 Calculating P/L:")
-        println("   Symbol: ${position.symbol}")
-        println("   Type: ${position.type.name}")
-        println("   Entry: ${position.entryPrice}")
-        println("   Current: ${position.currentPrice}")
-        println("   Price change: ${String.format("%.4f", priceChange)}")
-        println("   Change %: ${String.format("%.2f", changePercent)}%")
 
         // Для SHORT інвертуємо результат
         val effectiveChange = if (position.type == PositionType.SHORT) {
@@ -89,24 +87,24 @@ class TradingRepository(
             changePercent
         }
 
-        println("   Effective change (after type): ${String.format("%.2f", effectiveChange)}%")
-
         // Прибуток/збиток з 10x леверіджем
-        val result = (position.amount * effectiveChange * LEVERAGE_MULTIPLIER / 100).toInt()
-
-        println("   Amount: ${position.amount}")
-        println("   Leverage: ${LEVERAGE_MULTIPLIER}x")
-        println("   Final P/L: $result")
-
-        return result
+        return (position.amount * effectiveChange * LEVERAGE_MULTIPLIER / 100).toInt()
     }
 
     /**
      * Отримати поточний P/L для відображення в реальному часі
      */
     fun getCurrentProfitLoss(position: TradingPosition, currentPrice: Double): Int {
-        val updatedPosition = position.copy(currentPrice = currentPrice)
-        return calculateProfitLoss(updatedPosition)
+        val priceChange = currentPrice - position.entryPrice
+        val changePercent = (priceChange / position.entryPrice) * 100
+
+        val effectiveChange = if (position.type == PositionType.SHORT) {
+            -changePercent
+        } else {
+            changePercent
+        }
+
+        return (position.amount * effectiveChange * LEVERAGE_MULTIPLIER / 100).toInt()
     }
 
     /**
@@ -129,15 +127,23 @@ class TradingRepository(
      * Перевірити чи закінчилась позиція
      */
     fun isPositionExpired(position: TradingPosition): Boolean {
-        val currentTime = System.currentTimeMillis()
-        val isExpired = currentTime >= position.closesAt
+        return System.currentTimeMillis() >= position.closesAt
+    }
 
-        if (isExpired) {
-            val timeLeft = position.closesAt - currentTime
-            println("⏰ Position ${position.symbol} expired (was due ${-timeLeft}ms ago)")
+    /**
+     * Автоматично закрити прострочені позиції
+     */
+    suspend fun closeExpiredPositions(userId: Int) {
+        val activePositions = tradingDao.getActivePositions(userId).first()
+
+        activePositions.forEach { position ->
+            if (isPositionExpired(position)) {
+                val profitLoss = calculateProfitLoss(position)
+                val status = if (profitLoss >= 0) PositionStatus.WON else PositionStatus.LOST
+
+                closePosition(position.id, status, profitLoss)
+            }
         }
-
-        return isExpired
     }
 
     /**

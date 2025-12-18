@@ -2,8 +2,10 @@ package com.example.financegame.ui.screens.expenses
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financegame.data.api.HuggingFaceOcrService
 import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.local.database.entities.*
 import com.example.financegame.data.repository.ExpenseRepository
@@ -18,19 +20,33 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val expenseRepository = ExpenseRepository(database.expenseDao())
     private val userRepository = UserRepository(database.userDao())
 
-    // SharedPreferences для збереження ліміту
     private val prefs = application.getSharedPreferences("ExpensePrefs", Context.MODE_PRIVATE)
     private val EXPENSE_LIMIT_KEY = "expense_limit"
 
-    // 🆕 Система відстеження досягнень
     private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
+    private val ocrService = HuggingFaceOcrService()
 
     private val _showAddDialog = MutableStateFlow(false)
     val showAddDialog: StateFlow<Boolean> = _showAddDialog
 
-    // 🆕 Ліміт витрат
     private val _expenseLimit = MutableStateFlow(prefs.getFloat(EXPENSE_LIMIT_KEY, 0f).toDouble())
     val expenseLimit: StateFlow<Double> = _expenseLimit
+
+    private val _isProcessingReceipt = MutableStateFlow(false)
+    val isProcessingReceipt: StateFlow<Boolean> = _isProcessingReceipt
+
+    private val _ocrResult = MutableStateFlow<HuggingFaceOcrService.ReceiptData?>(null)
+    val ocrResult: StateFlow<HuggingFaceOcrService.ReceiptData?> = _ocrResult
+
+    private val _ocrError = MutableStateFlow<String?>(null)
+    val ocrError: StateFlow<String?> = _ocrError
+
+    private val _showImagePicker = MutableStateFlow<ImagePickerType?>(null)
+    val showImagePicker: StateFlow<ImagePickerType?> = _showImagePicker
+
+    enum class ImagePickerType {
+        CAMERA, GALLERY
+    }
 
     val allExpenses: StateFlow<List<Expense>> = expenseRepository.getAllExpenses(1)
         .stateIn(
@@ -69,7 +85,17 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         initialValue = 0.0
     )
 
-    // 🆕 Встановлення ліміту витрат
+    init {
+        viewModelScope.launch {
+            val isConnected = ocrService.testConnection()
+            if (isConnected) {
+                println("✅ Hugging Face API connection OK")
+            } else {
+                println("⚠️ Hugging Face API connection failed")
+            }
+        }
+    }
+
     fun setExpenseLimit(limit: Double) {
         viewModelScope.launch {
             _expenseLimit.value = limit
@@ -93,16 +119,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 date = System.currentTimeMillis()
             )
             expenseRepository.insertExpense(expense)
-
-// Додаємо досвід за додавання витрати
             userRepository.addExperience(1, 10)
-
-// 🆕 Відстежуємо досягнення
             achievementTracker.onExpenseAdded()
-
-// ✅ ОНОВЛЮЄМО ПРОГРЕС КВЕСТІВ
             updateQuestProgress()
-
             _showAddDialog.value = false
         }
     }
@@ -120,38 +139,122 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     fun hideAddExpenseDialog() {
         _showAddDialog.value = false
     }
+
+    fun requestImagePicker(type: ImagePickerType) {
+        _showImagePicker.value = type
+    }
+
+    fun clearImagePicker() {
+        _showImagePicker.value = null
+    }
+
+    fun processReceiptImage(bitmap: Bitmap) {
+        viewModelScope.launch {
+            _isProcessingReceipt.value = true
+            _ocrError.value = null
+            _ocrResult.value = null
+
+            try {
+                println("📸 Starting Hugging Face OCR processing...")
+
+                val result = ocrService.processReceipt(bitmap)
+
+                if (result.success) {
+                    println("✅ Hugging Face OCR SUCCESS: ${result.totalAmount} грн")
+                    _ocrResult.value = result
+                } else {
+                    println("❌ Hugging Face OCR FAILED: ${result.error}")
+                    _ocrError.value = result.error ?: "Не вдалося розпізнати чек"
+                }
+            } catch (e: Exception) {
+                println("❌ Exception in processReceiptImage: ${e.message}")
+                e.printStackTrace()
+                _ocrError.value = "Помилка мережі: ${e.message}"
+            } finally {
+                _isProcessingReceipt.value = false
+            }
+        }
+    }
+
+    // ✅ ВИПРАВЛЕНО: Використовуємо "До сплати" як основну суму
+    fun addExpenseFromReceipt(receiptData: HuggingFaceOcrService.ReceiptData, category: String) {
+        viewModelScope.launch {
+            // Пріоритет: do_splaty > totalAmount
+            val finalAmount = receiptData.doSplaty?.replace(",", ".")?.toDoubleOrNull()
+                ?: receiptData.totalAmount
+
+            addExpense(
+                amount = finalAmount,
+                category = category,
+                type = ExpenseType.EXPENSE,
+                description = receiptData.merchantName ?: ""
+            )
+            clearOcrResult()
+        }
+    }
+
+    fun clearOcrResult() {
+        _ocrResult.value = null
+        _ocrError.value = null
+    }
+
     private fun updateQuestProgress() {
         viewModelScope.launch {
-            // Оновлюємо прогрес всіх активних квестів
             val activeQuests = database.questDao().getActiveQuests().first()
 
             activeQuests.forEach { quest ->
                 when (quest.title) {
                     "Перший крок" -> {
-                        // Перевіряємо чи є хоча б одна витрата
                         val hasExpenses = database.expenseDao().getAllExpenses(1).first().isNotEmpty()
                         if (hasExpenses && quest.progress < 1f) {
                             database.questDao().updateQuestProgress(quest.id, 1f)
                         }
                     }
                     "П'ять транзакцій" -> {
-                        // Рахуємо витрати за сьогодні
-                        val calendar = java.util.Calendar.getInstance()
-                        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                        calendar.set(java.util.Calendar.MINUTE, 0)
-                        val startOfDay = calendar.timeInMillis
+                        val today = getTodayDateString()
+                        val todayExpenses = getExpensesCountForDate(today)
 
-                        val todayExpenses = database.expenseDao()
-                            .getExpensesByDateRange(1, startOfDay, System.currentTimeMillis())
-                            .first()
-                            .filter { it.type == com.example.financegame.data.local.database.entities.ExpenseType.EXPENSE }
-                            .size
-
-                        val progress = (todayExpenses.toFloat() / 5f).coerceIn(0f, 1f)
+                        val progress = (todayExpenses.toFloat() / quest.targetAmount.toFloat()).coerceIn(0f, 1f)
                         database.questDao().updateQuestProgress(quest.id, progress)
+
+                        if (todayExpenses >= quest.targetAmount.toInt()) {
+                            database.questDao().updateQuestProgress(quest.id, 1f)
+                        }
                     }
                 }
             }
         }
+    }
+
+    private fun getTodayDateString(): String {
+        val calendar = Calendar.getInstance()
+        return "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH)}-${calendar.get(Calendar.DAY_OF_MONTH)}"
+    }
+
+    private suspend fun getExpensesCountForDate(dateString: String): Int {
+        val calendar = parseDateString(dateString)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val startOfDay = calendar.timeInMillis
+
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        val endOfDay = calendar.timeInMillis
+
+        return expenseRepository.getExpensesByDateRange(1, startOfDay, endOfDay)
+            .first()
+            .filter { it.type == ExpenseType.EXPENSE }
+            .size
+    }
+
+    private fun parseDateString(dateString: String): Calendar {
+        val parts = dateString.split("-")
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.YEAR, parts[0].toInt())
+        calendar.set(Calendar.MONTH, parts[1].toInt())
+        calendar.set(Calendar.DAY_OF_MONTH, parts[2].toInt())
+        return calendar
     }
 }

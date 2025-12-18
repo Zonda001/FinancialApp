@@ -40,6 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "finance_game_database"
                 )
+                    .fallbackToDestructiveMigration() // ✅ ДОДАНО ЦЕЙ РЯДОК
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -346,5 +347,4 @@ abstract class AppDatabase : RoomDatabase() {
             achievements.forEach { achievementDao.insertAchievement(it) }
         }
     }
-
 }

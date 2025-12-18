@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.financegame.ui.screens.achievements.AchievementsScreen
 import com.example.financegame.ui.screens.expenses.ExpensesScreen
+import com.example.financegame.ui.screens.expenses.ExpenseViewModel
 import com.example.financegame.ui.screens.profile.ProfileScreen
 import com.example.financegame.ui.screens.quests.QuestsScreen
 import com.example.financegame.ui.screens.reports.ReportsScreen
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Profile : Screen("profile", "Профіль", Icons.Default.Person)
-
     object Trading : Screen("trading", "Trading", Icons.Default.ShowChart)
     object Expenses : Screen("expenses", "Витрати", Icons.Default.AccountBalanceWallet)
     object Quests : Screen("quests", "Квести", Icons.Default.EmojiEvents)
@@ -33,9 +33,20 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Settings : Screen("settings", "Налаштування", Icons.Default.Settings)
 }
 
+@Composable
+fun MainScreenWithLaunchers(
+    settingsViewModel: SettingsViewModel,
+    expenseViewModel: ExpenseViewModel
+) {
+    // Launchers тепер в ExpensesScreen, тут вони не потрібні
+    MainScreen(settingsViewModel = settingsViewModel)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
+fun MainScreen(
+    settingsViewModel: SettingsViewModel? = null
+) {
     val screens = listOf(
         Screen.Profile,
         Screen.Trading,
@@ -101,7 +112,7 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (page) {
                         0 -> ProfileScreen()
-                        1 -> TradingScreen()  // ⬅️ ДОДАЙТЕ
+                        1 -> TradingScreen()
                         2 -> ExpensesScreen()
                         3 -> QuestsScreen(
                             onNavigateToReports = { scope.launch { pagerState.scrollToPage(5) } },
@@ -109,7 +120,6 @@ fun MainScreen(settingsViewModel: SettingsViewModel? = null) {
                             onNavigateToAchievements = { scope.launch { pagerState.scrollToPage(4) } },
                             onNavigateToProfile = { scope.launch { pagerState.scrollToPage(0) } }
                         )
-
                         4 -> AchievementsScreen()
                         5 -> ReportsScreen()
                         6 -> {

@@ -12,12 +12,11 @@ interface TradingDao {
     @Query("SELECT * FROM trading_positions WHERE userId = :userId AND status = 'ACTIVE' ORDER BY openedAt DESC")
     fun getActivePositions(userId: Int): Flow<List<TradingPosition>>
 
-    // ✅ ВИПРАВЛЕНО: Сортування за часом закриття, щоб нові позиції були зверху
-    @Query("SELECT * FROM trading_positions WHERE userId = :userId AND status IN ('WON', 'LOST', 'CLOSED') ORDER BY closesAt DESC")
+    @Query("SELECT * FROM trading_positions WHERE userId = :userId AND status IN ('WON', 'LOST', 'CLOSED') ORDER BY openedAt DESC")
     fun getClosedPositions(userId: Int): Flow<List<TradingPosition>>
 
-    @Query("SELECT * FROM trading_positions WHERE id = :positionId LIMIT 1")
-    suspend fun getPositionById(positionId: Int): TradingPosition?
+    @Query("SELECT * FROM trading_positions WHERE id = :positionId")
+    fun getPositionById(positionId: Int): Flow<TradingPosition?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPosition(position: TradingPosition): Long
@@ -28,15 +27,8 @@ interface TradingDao {
     @Query("UPDATE trading_positions SET currentPrice = :price WHERE id = :positionId")
     suspend fun updatePositionPrice(positionId: Int, price: Double)
 
-    // ✅ ВИПРАВЛЕНО: Оновлюємо і час закриття при закритті позиції
-    @Query("""
-        UPDATE trading_positions 
-        SET status = :status, 
-            profitLoss = :profitLoss,
-            closesAt = :closedAt
-        WHERE id = :positionId
-    """)
-    suspend fun closePosition(positionId: Int, status: PositionStatus, profitLoss: Int, closedAt: Long = System.currentTimeMillis())
+    @Query("UPDATE trading_positions SET status = :status, profitLoss = :profitLoss WHERE id = :positionId")
+    suspend fun closePosition(positionId: Int, status: PositionStatus, profitLoss: Int)
 
     @Delete
     suspend fun deletePosition(position: TradingPosition)
@@ -44,7 +36,7 @@ interface TradingDao {
     @Query("DELETE FROM trading_positions WHERE userId = :userId")
     suspend fun deleteAllPositions(userId: Int)
 
-    // ✅ ВИПРАВЛЕНО: Статистика тільки для WON/LOST позицій
+    // Статистика
     @Query("SELECT SUM(profitLoss) FROM trading_positions WHERE userId = :userId AND status IN ('WON', 'LOST')")
     fun getTotalProfitLoss(userId: Int): Flow<Int?>
 
@@ -53,8 +45,4 @@ interface TradingDao {
 
     @Query("SELECT COUNT(*) FROM trading_positions WHERE userId = :userId AND status = 'LOST'")
     fun getLostPositionsCount(userId: Int): Flow<Int>
-
-    // ✅ ДОДАНО: Загальна кількість закритих позицій для статистики
-    @Query("SELECT COUNT(*) FROM trading_positions WHERE userId = :userId AND status IN ('WON', 'LOST', 'CLOSED')")
-    fun getTotalClosedPositionsCount(userId: Int): Flow<Int>
 }

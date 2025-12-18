@@ -22,6 +22,7 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
     private val _selectedAsset = MutableStateFlow<TradingAsset?>(null)
     val selectedAsset: StateFlow<TradingAsset?> = _selectedAsset
 
+    // Зберігаємо останні відомі ціни, щоб вони не зникали під час оновлення
     private val _assetPrices = MutableStateFlow<Map<String, Double>>(emptyMap())
     val assetPrices: StateFlow<Map<String, Double>> = _assetPrices
 
@@ -29,7 +30,6 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private var priceUpdateJob: Job? = null
-    private var positionCheckJob: Job? = null
 
     val activePositions: StateFlow<List<TradingPosition>> =
         tradingRepository.getActivePositions(1)
@@ -54,37 +54,29 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
             initialValue = null
         )
 
-    // ✅ ВИПРАВЛЕНО: Правильний розрахунок P/L тільки для закритих позицій
-    val totalProfitLoss: StateFlow<Int> = closedPositions
-        .map { positions ->
-            positions.sumOf { it.profitLoss }
-        }
+    val totalProfitLoss: StateFlow<Int> = tradingRepository.getTotalProfitLoss(1)
+        .map { it ?: 0 }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = 0
         )
 
-    // ✅ ВИПРАВЛЕНО: Win rate тільки для WON/LOST позицій
-    val winRate: StateFlow<Float> = closedPositions
-        .map { positions ->
-            val wonAndLost = positions.filter {
-                it.status == PositionStatus.WON || it.status == PositionStatus.LOST
-            }
-            val won = wonAndLost.count { it.status == PositionStatus.WON }
-            val total = wonAndLost.size
-
-            if (total > 0) (won.toFloat() / total.toFloat()) * 100f else 0f
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 0f
-        )
+    val winRate: StateFlow<Float> = combine(
+        tradingRepository.getWonPositionsCount(1),
+        tradingRepository.getLostPositionsCount(1)
+    ) { won, lost ->
+        val total = won + lost
+        if (total > 0) (won.toFloat() / total.toFloat()) * 100f else 0f
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
+    )
 
     init {
         startPriceUpdates()
-        startPositionChecks()
+        checkExpiredPositions()
     }
 
     // ======================== PRICE UPDATES ========================
@@ -92,10 +84,11 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
     private fun startPriceUpdates() {
         priceUpdateJob?.cancel()
         priceUpdateJob = viewModelScope.launch {
+            // Початкове завантаження
             updateAllPrices()
 
             while (true) {
-                delay(30000)
+                delay(30000) // Оновлення кожні 30 секунд
                 println("⏰ Starting price update cycle...")
                 updateAllPrices()
                 updateActivePositions()
@@ -106,15 +99,18 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun updateAllPrices() {
         try {
+            // Створюємо нову мапу на основі старої, щоб зберегти старі ціни
             val updatedPrices = _assetPrices.value.toMutableMap()
 
             println("🔄 Updating prices for ${DefaultTradingAssets.assets.size} assets...")
 
             DefaultTradingAssets.assets.forEach { asset ->
                 priceApiService.getAssetPrice(asset.symbol, asset.category.name)?.let { price ->
+                    // Оновлюємо тільки якщо отримали нову ціну
                     updatedPrices[asset.symbol] = price
                     println("  ✅ ${asset.symbol}: $price")
                 } ?: println("  ⚠️ ${asset.symbol}: no price received")
+                // Якщо ціна не отримана - залишаємо стару
             }
 
             _assetPrices.value = updatedPrices
@@ -122,6 +118,7 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
         } catch (e: Exception) {
             println("❌ Error updating prices: ${e.message}")
             e.printStackTrace()
+            // При помилці просто залишаємо старі ціни
         }
     }
 
@@ -138,12 +135,17 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
             val currentPrice = _assetPrices.value[position.symbol]
             if (currentPrice != null && currentPrice != position.currentPrice) {
                 try {
+                    // Оновлюємо через repository щоб Room емітив зміни
                     val updatedPosition = position.copy(currentPrice = currentPrice)
                     tradingRepository.updatePosition(updatedPosition)
                     println("  ✅ ${position.symbol}: ${position.currentPrice} → $currentPrice")
                 } catch (e: Exception) {
                     println("  ❌ Failed to update ${position.symbol}: ${e.message}")
                 }
+            } else if (currentPrice == null) {
+                println("  ⚠️ No price for ${position.symbol}")
+            } else {
+                println("  ℹ️ ${position.symbol}: price unchanged ($currentPrice)")
             }
         }
     }
@@ -165,7 +167,6 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
         _selectedAsset.value = asset
     }
 
-    // ✅ ВИПРАВЛЕНО: Правильне віднімання балів при відкритті позиції
     fun openPosition(
         asset: TradingAsset,
         type: PositionType,
@@ -177,16 +178,10 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
 
             // Перевіряємо чи достатньо балів
             if (user.totalPoints < amount) {
-                println("❌ Недостатньо балів: потрібно $amount, є ${user.totalPoints}")
                 return@launch
             }
 
-            val currentPrice = _assetPrices.value[asset.symbol]
-            if (currentPrice == null) {
-                println("❌ Ціна для ${asset.symbol} недоступна")
-                return@launch
-            }
-
+            val currentPrice = _assetPrices.value[asset.symbol] ?: return@launch
             val closesAt = System.currentTimeMillis() + (duration.hours * 60 * 60 * 1000)
 
             val position = TradingPosition(
@@ -197,114 +192,52 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
                 currentPrice = currentPrice,
                 amount = amount,
                 duration = duration,
-                closesAt = closesAt,
-                status = PositionStatus.ACTIVE,
-                profitLoss = 0
+                closesAt = closesAt
             )
 
-            println("📈 Opening position: ${asset.symbol} ${type.name} $amount at $currentPrice")
+            tradingRepository.openPosition(position)
 
-            try {
-                tradingRepository.openPosition(position)
-
-                // ✅ ВИПРАВЛЕНО: Віднімаємо бали одразу після відкриття
-                val newPoints = user.totalPoints - amount
-                userRepository.updateUser(user.copy(totalPoints = newPoints))
-
-                println("✅ Position opened. New balance: $newPoints")
-            } catch (e: Exception) {
-                println("❌ Error opening position: ${e.message}")
-                e.printStackTrace()
-            }
+            // Віднімаємо бали
+            userRepository.updateUser(user.copy(totalPoints = user.totalPoints - amount))
         }
     }
 
-    // ✅ ВИПРАВЛЕНО: Правильний розрахунок при достроковому закритті
     fun closePositionEarly(position: TradingPosition) {
         viewModelScope.launch {
             val user = currentUser.value ?: return@launch
 
-            // Використовуємо поточну ціну з _assetPrices
-            val currentPrice = _assetPrices.value[position.symbol] ?: position.currentPrice
+            val profitLoss = tradingRepository.calculateProfitLoss(position)
 
-            // Оновлюємо позицію з поточною ціною
-            val updatedPosition = position.copy(currentPrice = currentPrice)
+            tradingRepository.closePosition(
+                position.id,
+                PositionStatus.CLOSED,
+                profitLoss
+            )
 
-            val profitLoss = tradingRepository.calculateProfitLoss(updatedPosition)
-
-            println("🔒 Closing position early: ${position.symbol}")
-            println("   Entry: ${position.entryPrice}, Current: $currentPrice")
-            println("   Amount: ${position.amount}, P/L: $profitLoss")
-
-            try {
-                tradingRepository.closePosition(
-                    position.id,
-                    PositionStatus.CLOSED,
-                    profitLoss
-                )
-
-                // ✅ ВИПРАВЛЕНО: Повертаємо початкову ставку + прибуток/збиток
-                val returnAmount = position.amount + profitLoss
-                val newPoints = (user.totalPoints + returnAmount).coerceAtLeast(0)
-
-                userRepository.updateUser(user.copy(totalPoints = newPoints))
-
-                println("✅ Position closed. Returned: $returnAmount, New balance: $newPoints")
-            } catch (e: Exception) {
-                println("❌ Error closing position: ${e.message}")
-                e.printStackTrace()
-            }
+            // Повертаємо бали + прибуток/збиток (але не менше 0)
+            val newPoints = user.totalPoints + position.amount + profitLoss
+            userRepository.updateUser(user.copy(totalPoints = newPoints.coerceAtLeast(0)))
         }
     }
 
-    // ✅ ВИПРАВЛЕНО: Окрема функція для перевірки прострочених позицій
-    private fun startPositionChecks() {
-        positionCheckJob?.cancel()
-        positionCheckJob = viewModelScope.launch {
+    private fun checkExpiredPositions() {
+        viewModelScope.launch {
             while (true) {
-                delay(5000) // Перевірка кожні 5 секунд
-                checkExpiredPositions()
-            }
-        }
-    }
+                delay(10000) // Перевірка кожні 10 секунд
 
-    // ✅ ВИПРАВЛЕНО: Правильна перевірка часу закриття
-    private suspend fun checkExpiredPositions() {
-        val currentTime = System.currentTimeMillis()
-        val positions = activePositions.value
+                activePositions.value.forEach { position ->
+                    if (tradingRepository.isPositionExpired(position)) {
+                        val profitLoss = tradingRepository.calculateProfitLoss(position)
+                        val status = if (profitLoss >= 0) PositionStatus.WON else PositionStatus.LOST
 
-        if (positions.isEmpty()) return
+                        tradingRepository.closePosition(position.id, status, profitLoss)
 
-        positions.forEach { position ->
-            // Перевіряємо чи минув час закриття
-            if (currentTime >= position.closesAt) {
-                println("⏰ Position expired: ${position.symbol}")
-
-                // Використовуємо поточну ціну
-                val currentPrice = _assetPrices.value[position.symbol] ?: position.currentPrice
-                val updatedPosition = position.copy(currentPrice = currentPrice)
-
-                val profitLoss = tradingRepository.calculateProfitLoss(updatedPosition)
-                val status = if (profitLoss >= 0) PositionStatus.WON else PositionStatus.LOST
-
-                println("   Entry: ${position.entryPrice}, Final: $currentPrice")
-                println("   P/L: $profitLoss, Status: ${status.name}")
-
-                try {
-                    tradingRepository.closePosition(position.id, status, profitLoss)
-
-                    currentUser.value?.let { user ->
-                        // ✅ ВИПРАВЛЕНО: Повертаємо початкову ставку + прибуток/збиток
-                        val returnAmount = position.amount + profitLoss
-                        val newPoints = (user.totalPoints + returnAmount).coerceAtLeast(0)
-
-                        userRepository.updateUser(user.copy(totalPoints = newPoints))
-
-                        println("✅ Position expired and closed. Returned: $returnAmount, New balance: $newPoints")
+                        // Повертаємо бали
+                        currentUser.value?.let { user ->
+                            val newPoints = user.totalPoints + position.amount + profitLoss
+                            userRepository.updateUser(user.copy(totalPoints = newPoints.coerceAtLeast(0)))
+                        }
                     }
-                } catch (e: Exception) {
-                    println("❌ Error closing expired position: ${e.message}")
-                    e.printStackTrace()
                 }
             }
         }
@@ -313,6 +246,5 @@ class TradingViewModel(application: Application) : AndroidViewModel(application)
     override fun onCleared() {
         super.onCleared()
         priceUpdateJob?.cancel()
-        positionCheckJob?.cancel()
     }
 }

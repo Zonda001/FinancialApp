@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.financegame.data.api.HuggingFaceOcrService
+import com.example.financegame.data.api.OcrService
 import com.example.financegame.data.local.database.AppDatabase
 import com.example.financegame.data.local.database.entities.*
 import com.example.financegame.data.repository.ExpenseRepository
@@ -24,7 +24,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val EXPENSE_LIMIT_KEY = "expense_limit"
 
     private val achievementTracker = AchievementTracker(database, viewModelScope, getApplication())
-    private val ocrService = HuggingFaceOcrService()
+
+    // Власний OCR сервіс для розпізнавання чеків
+    private val ocrService = OcrService()
 
     private val _showAddDialog = MutableStateFlow(false)
     val showAddDialog: StateFlow<Boolean> = _showAddDialog
@@ -35,8 +37,8 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val _isProcessingReceipt = MutableStateFlow(false)
     val isProcessingReceipt: StateFlow<Boolean> = _isProcessingReceipt
 
-    private val _ocrResult = MutableStateFlow<HuggingFaceOcrService.ReceiptData?>(null)
-    val ocrResult: StateFlow<HuggingFaceOcrService.ReceiptData?> = _ocrResult
+    private val _ocrResult = MutableStateFlow<OcrService.ReceiptData?>(null)
+    val ocrResult: StateFlow<OcrService.ReceiptData?> = _ocrResult
 
     private val _ocrError = MutableStateFlow<String?>(null)
     val ocrError: StateFlow<String?> = _ocrError
@@ -84,17 +86,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = 0.0
     )
-
-    init {
-        viewModelScope.launch {
-            val isConnected = ocrService.testConnection()
-            if (isConnected) {
-                println("✅ Hugging Face API connection OK")
-            } else {
-                println("⚠️ Hugging Face API connection failed")
-            }
-        }
-    }
 
     fun setExpenseLimit(limit: Double) {
         viewModelScope.launch {
@@ -155,36 +146,31 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             _ocrResult.value = null
 
             try {
-                println("📸 Starting Hugging Face OCR processing...")
+                println("📸 Розпізнавання чеку...")
 
                 val result = ocrService.processReceipt(bitmap)
 
                 if (result.success) {
-                    println("✅ Hugging Face OCR SUCCESS: ${result.totalAmount} грн")
+                    println("✅ Чек успішно розпізнано: ${result.totalAmount} грн")
                     _ocrResult.value = result
                 } else {
-                    println("❌ Hugging Face OCR FAILED: ${result.error}")
+                    println("❌ Помилка розпізнавання: ${result.error}")
                     _ocrError.value = result.error ?: "Не вдалося розпізнати чек"
                 }
             } catch (e: Exception) {
-                println("❌ Exception in processReceiptImage: ${e.message}")
+                println("❌ Помилка: ${e.message}")
                 e.printStackTrace()
-                _ocrError.value = "Помилка мережі: ${e.message}"
+                _ocrError.value = "Помилка: ${e.message}"
             } finally {
                 _isProcessingReceipt.value = false
             }
         }
     }
 
-    // ✅ ВИПРАВЛЕНО: Використовуємо "До сплати" як основну суму
-    fun addExpenseFromReceipt(receiptData: HuggingFaceOcrService.ReceiptData, category: String) {
+    fun addExpenseFromReceipt(receiptData: OcrService.ReceiptData, category: String) {
         viewModelScope.launch {
-            // Пріоритет: do_splaty > totalAmount
-            val finalAmount = receiptData.doSplaty?.replace(",", ".")?.toDoubleOrNull()
-                ?: receiptData.totalAmount
-
             addExpense(
-                amount = finalAmount,
+                amount = receiptData.totalAmount,
                 category = category,
                 type = ExpenseType.EXPENSE,
                 description = receiptData.merchantName ?: ""

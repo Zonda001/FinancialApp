@@ -1,4 +1,6 @@
 import org.gradle.kotlin.dsl.implementation
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,6 +8,16 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
 }
+
+// 🔐 Читаємо API ключ з local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
+// Отримуємо ключ (або використовуємо dummy для CI/CD)
+val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: "DUMMY_KEY_FOR_BUILD"
 
 android {
     namespace = "com.example.financegame"
@@ -23,6 +35,9 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
+
+        // 🔐 Додаємо API ключ в BuildConfig
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
@@ -46,6 +61,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true  // 🔐 Увімкнути BuildConfig
     }
 
     packaging {
@@ -100,9 +116,12 @@ dependencies {
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // ✅ ДОДАНО: OkHttp для HTTP запитів до Cloudflare API
+    // OkHttp для HTTP запитів
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Gemini AI SDK для розпізнавання чеків
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

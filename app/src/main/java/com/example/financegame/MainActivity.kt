@@ -40,6 +40,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // ❌ ВИДАЛЕНО: Ініціалізація Python OCR
+        // Python більше не потрібен - використовуємо Cloudflare API!
+
         database = AppDatabase.getDatabase(this)
         settingsViewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
         expenseViewModel = ViewModelProvider(this)[ExpenseViewModel::class.java]

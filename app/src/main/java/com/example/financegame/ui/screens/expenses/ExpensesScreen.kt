@@ -1011,25 +1011,20 @@ fun ReceiptProcessingDialog(
 }
 
 // ======================== RECEIPT RESULT DIALOG ========================
-// ======================== RECEIPT RESULT DIALOG ========================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceiptResultDialog(
-    receiptData: com.example.financegame.data.api.HuggingFaceOcrService.ReceiptData,
+    receiptData: com.example.financegame.data.api.OcrService.ReceiptData,
     currency: String,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedCategory by remember {
         mutableStateOf(
-            com.example.financegame.data.api.HuggingFaceOcrService().suggestCategory(receiptData.merchantName)
+            com.example.financegame.data.api.OcrService().suggestCategory(receiptData.merchantName)
         )
     }
     var showCategoryMenu by remember { mutableStateOf(false) }
-
-    // ✅ ВИПРАВЛЕНО: Використовуємо "До сплати" як основну суму
-    val finalAmount = receiptData.doSplaty?.replace(",", ".")?.toDoubleOrNull()
-        ?: receiptData.totalAmount
 
     AlertDialog(
         onDismissRequest = onDismiss
@@ -1037,7 +1032,7 @@ fun ReceiptResultDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 500.dp),
+                .heightIn(max = 600.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             )
@@ -1047,6 +1042,7 @@ fun ReceiptResultDialog(
                     .fillMaxWidth()
                     .padding(20.dp)
             ) {
+                // Заголовок
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1077,78 +1073,100 @@ fun ReceiptResultDialog(
                 Divider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ ПОКАЗУЄМО ЛИШЕ ЗАГАЛЬНУ СУМУ
+                // Загальна сума
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                     )
                 ) {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Основна сума "До сплати"
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "До сплати:",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                "${String.format("%.2f", finalAmount)} $currency",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        // Додаткова інформація (якщо є)
-                        if (receiptData.pdv != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    "ПДВ:",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    "${receiptData.pdv} $currency",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        if (receiptData.discount != null) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    "Знижка:",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    "${receiptData.discount} $currency",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = QuestCompletedColor
-                                )
-                            }
-                        }
+                        Text(
+                            "Загальна сума:",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "${String.format("%.2f", receiptData.totalAmount)} $currency",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Список товарів (якщо є)
+                if (receiptData.products.isNotEmpty()) {
+                    Text(
+                        "Товари:",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        modifier = Modifier.heightIn(max = 150.dp)
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(receiptData.products.take(5)) { product ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            product.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        if (product.quantity > 1) {
+                                            Text(
+                                                "× ${product.quantity}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = TextSecondary
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        "${String.format("%.2f", product.price)} $currency",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
+                            if (receiptData.products.size > 5) {
+                                item {
+                                    Text(
+                                        "... ще ${receiptData.products.size - 5} товарів",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Вибір категорії
                 Text(
@@ -1200,7 +1218,7 @@ fun ReceiptResultDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Інфо про Hugging Face
+                // Інфо про AI розпізнавання
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
@@ -1212,10 +1230,10 @@ fun ReceiptResultDialog(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("🚀", style = MaterialTheme.typography.headlineMedium)
+                        Text("🤖", style = MaterialTheme.typography.headlineMedium)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Розпізнано за допомогою Hugging Face OCR API",
+                            "Розпізнано за допомогою власної NLP",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )

@@ -109,9 +109,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun addExperience(points: Int) {
         viewModelScope.launch {
             currentUser.value?.let { user ->
+                val oldLevel = user.level
                 val newExp = user.experience + points
                 val newLevel = calculateLevel(newExp)
-                val newTotalPoints = user.totalPoints + points
+                
+                // Якщо рівень підвищився - додаємо бонус 100 балів
+                val levelUpBonus = if (newLevel > oldLevel) {
+                    100 * (newLevel - oldLevel)  // 100 балів за кожен новий рівень
+                } else {
+                    0
+                }
+                
+                val newTotalPoints = user.totalPoints + points + levelUpBonus
 
                 userRepository.updateUser(
                     user.copy(

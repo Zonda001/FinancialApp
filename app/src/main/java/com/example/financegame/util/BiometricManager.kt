@@ -17,13 +17,11 @@ class BiometricAuthManager(private val context: Context) {
     }
 
     fun authenticate(
-        activity: Any,  // ← Приймаємо Any, щоб працювати і з ComponentActivity
+        activity: FragmentActivity,
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
         onFailed: () -> Unit
     ) {
-        // Кастуємо до FragmentActivity (ComponentActivity також підтримується)
-        val fragmentActivity = activity as? FragmentActivity ?: return
         val executor = ContextCompat.getMainExecutor(context)
         val biometricPrompt = BiometricPrompt(
             activity,

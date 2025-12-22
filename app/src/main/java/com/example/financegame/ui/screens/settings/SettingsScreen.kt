@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.financegame.data.settings.ThemeMode
@@ -29,6 +31,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onThemeChanged: (ThemeMode) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val themeMode by viewModel.themeMode.collectAsState()
     val appTheme by viewModel.appTheme.collectAsState()
     val language by viewModel.language.collectAsState()
@@ -41,15 +44,17 @@ fun SettingsScreen(
     var showColorThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Налаштування", fontWeight = FontWeight.Bold) },
+                title = { Text("Налаштування", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                ),
+                modifier = Modifier.height(90.dp)
             )
         }
     ) { padding ->
@@ -164,6 +169,15 @@ fun SettingsScreen(
 
             item {
                 SettingsCard {
+                    SettingsItem(
+                        icon = Icons.Default.Lock,
+                        title = "Змінити пароль",
+                        subtitle = "Оновити пароль для входу",
+                        onClick = { showChangePasswordDialog = true }
+                    )
+
+                    Divider(modifier = Modifier.padding(horizontal = 16.dp))
+
                     SettingsSwitchItem(
                         icon = Icons.Default.Fingerprint,
                         title = "Біометрична автентифікація",
@@ -259,6 +273,14 @@ fun SettingsScreen(
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
+        )
+    }
+
+    // Діалог зміни паролю
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            context = context,
+            onDismiss = { showChangePasswordDialog = false }
         )
     }
 }
@@ -585,6 +607,180 @@ fun CurrencySelectionDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Закрити")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChangePasswordDialog(
+    context: android.content.Context,
+    onDismiss: () -> Unit
+) {
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showCurrentPassword by remember { mutableStateOf(false) }
+    var showNewPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    var successMessage by remember { mutableStateOf("") }
+
+    val prefs = context.getSharedPreferences("FinanceGamePrefs", android.content.Context.MODE_PRIVATE)
+    val savedPassword = prefs.getString("user_password", "") ?: ""
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                "Змінити пароль",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            ) 
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Поточний пароль
+                OutlinedTextField(
+                    value = currentPassword,
+                    onValueChange = {
+                        currentPassword = it
+                        errorMessage = ""
+                        successMessage = ""
+                    },
+                    label = { Text("Поточний пароль") },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
+                    trailingIcon = {
+                        IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
+                            Icon(
+                                if (showCurrentPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                null
+                            )
+                        }
+                    },
+                    visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = errorMessage.isNotEmpty()
+                )
+
+                // Новий пароль
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = {
+                        newPassword = it
+                        errorMessage = ""
+                        successMessage = ""
+                    },
+                    label = { Text("Новий пароль") },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
+                    trailingIcon = {
+                        IconButton(onClick = { showNewPassword = !showNewPassword }) {
+                            Icon(
+                                if (showNewPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                null
+                            )
+                        }
+                    },
+                    visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                // Підтвердити пароль
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = {
+                        confirmPassword = it
+                        errorMessage = ""
+                        successMessage = ""
+                    },
+                    label = { Text("Підтвердити пароль") },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
+                    trailingIcon = {
+                        IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
+                            Icon(
+                                if (showConfirmPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                null
+                            )
+                        }
+                    },
+                    visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                // Повідомлення про помилку
+                if (errorMessage.isNotEmpty()) {
+                    Text(
+                        errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                // Повідомлення про успіх
+                if (successMessage.isNotEmpty()) {
+                    Text(
+                        successMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    when {
+                        savedPassword.isEmpty() -> {
+                            errorMessage = "Ви не встановили пароль (гостьовий режим)"
+                        }
+                        currentPassword.isEmpty() -> {
+                            errorMessage = "Введіть поточний пароль"
+                        }
+                        currentPassword != savedPassword -> {
+                            errorMessage = "Невірний поточний пароль"
+                        }
+                        newPassword.isEmpty() -> {
+                            errorMessage = "Введіть новий пароль"
+                        }
+                        newPassword.length < 4 -> {
+                            errorMessage = "Пароль повинен містити мінімум 4 символи"
+                        }
+                        newPassword != confirmPassword -> {
+                            errorMessage = "Паролі не співпадають"
+                        }
+                        newPassword == currentPassword -> {
+                            errorMessage = "Новий пароль не може бути таким самим"
+                        }
+                        else -> {
+                            // Зберігаємо новий пароль
+                            prefs.edit().apply {
+                                putString("user_password", newPassword)
+                                apply()
+                            }
+                            successMessage = "Пароль успішно змінено!"
+                            
+                            // Закриваємо діалог через короткий час
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                onDismiss()
+                            }, 1000)
+                        }
+                    }
+                }
+            ) {
+                Text("Зберегти")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Скасувати")
             }
         }
     )

@@ -2,7 +2,7 @@ package com.example.financegame
 
 import android.content.Context
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,10 +21,12 @@ import com.example.financegame.ui.screens.auth.RegistrationScreen
 import com.example.financegame.ui.screens.expenses.ExpenseViewModel
 import com.example.financegame.ui.screens.settings.SettingsViewModel
 import com.example.financegame.ui.theme.FinanceGameTheme
+import com.example.financegame.util.BiometricAuthManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+    private lateinit var biometricAuthManager: BiometricAuthManager
     private lateinit var database: AppDatabase
     private lateinit var settingsViewModel: SettingsViewModel
     private lateinit var expenseViewModel: ExpenseViewModel
@@ -40,9 +42,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ❌ ВИДАЛЕНО: Ініціалізація Python OCR
-        // Python більше не потрібен - використовуємо Cloudflare API!
-
+        biometricAuthManager = BiometricAuthManager(this)
         database = AppDatabase.getDatabase(this)
         settingsViewModel = ViewModelProvider(this)[SettingsViewModel::class.java]
         expenseViewModel = ViewModelProvider(this)[ExpenseViewModel::class.java]
@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                             apply()
                                         }
 
-                                        settingsViewModel.setBiometricEnabled(false)
+                                        settingsViewModel.setBiometricEnabled(useBiometric)
 
                                         isRegistered.value = true
                                         isAuthenticated.value = true
@@ -146,20 +146,34 @@ class MainActivity : ComponentActivity() {
                                         isAuthenticated.value = true
                                     }
                                 },
-                                biometricAvailable = false
+                                biometricAvailable = biometricAuthManager.isBiometricAvailable()
                             )
                         }
 
                         !isAuthenticated.value -> {
                             val savedPassword = prefs.getString(KEY_PASSWORD, "") ?: ""
+                            val biometricEnabled = settingsViewModel.biometricEnabled.collectAsState().value
 
                             LoginScreen(
                                 savedPassword = savedPassword,
-                                biometricAvailable = false,
+                                biometricAvailable = biometricAuthManager.isBiometricAvailable() && biometricEnabled,
                                 onPasswordSuccess = {
                                     isAuthenticated.value = true
                                 },
-                                onBiometricClick = { }
+                                onBiometricClick = {
+                                    biometricAuthManager.authenticate(
+                                        activity = this@MainActivity,
+                                        onSuccess = {
+                                            isAuthenticated.value = true
+                                        },
+                                        onError = { errorMessage ->
+                                            // Можна показати Toast з помилкою
+                                        },
+                                        onFailed = {
+                                            // Автентифікація не вдалася
+                                        }
+                                    )
+                                }
                             )
                         }
 

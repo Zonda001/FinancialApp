@@ -80,7 +80,8 @@ fun ProfileScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
-                }
+                },
+                modifier = Modifier.height(80.dp)
             )
         }
     ) { padding ->

@@ -152,7 +152,8 @@ fun ExpensesScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                ),
+                modifier = Modifier.height(80.dp)
             )
         },
         floatingActionButton = {

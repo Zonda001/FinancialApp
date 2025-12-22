@@ -12,6 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import com.example.financegame.ui.screens.achievements.AchievementsScreen
 import com.example.financegame.ui.screens.expenses.ExpensesScreen
 import com.example.financegame.ui.screens.expenses.ExpenseViewModel
@@ -26,7 +30,7 @@ import kotlinx.coroutines.launch
 // Маршрути навігації
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Profile : Screen("profile", "Профіль", Icons.Default.Person)
-    object Trading : Screen("trading", "Trading", Icons.Default.ShowChart)
+    object Trading : Screen("trading", "Трейдинг", Icons.Default.ShowChart)
     object Expenses : Screen("expenses", "Витрати", Icons.Default.AccountBalanceWallet)
     object Quests : Screen("quests", "Квести", Icons.Default.EmojiEvents)
     object Achievements : Screen("achievements", "Досягнення", Icons.Default.Stars)
@@ -68,61 +72,62 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            // NavigationBar обгорнуто в Column зі Spacer для системної панелі
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ) {
-                    screens.forEachIndexed { index, screen ->
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    screen.icon,
-                                    contentDescription = screen.title
-                                )
-                            },
-                            label = { Text(screen.title) },
-                            selected = pagerState.currentPage == index,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.scrollToPage(index)
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                screens.forEachIndexed { index, screen ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                screen.icon,
+                                contentDescription = screen.title
                             )
+                        },
+                        label = { 
+                            Text(
+                                text = screen.title,
+                                maxLines = 2,
+                                softWrap = true,
+                                overflow = TextOverflow.Ellipsis,
+                                lineHeight = 11.sp,
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    hyphens = Hyphens.Auto
+                                )
+                            )
+                        },
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            scope.launch {
+                                pagerState.scrollToPage(index)
+                            }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
-                    }
+                    )
                 }
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsBottomHeight(WindowInsets.navigationBars)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                )
             }
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = isPagerScrollEnabled,
-                pageSpacing = 0.dp,
-                key = { it }
-            ) { page ->
-                Box(modifier = Modifier.fillMaxSize()) {
+    ) { _ ->
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = isPagerScrollEnabled,
+            pageSpacing = 0.dp,
+            key = { it }
+        ) { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 80.dp)
+                ) {
                     when (page) {
                         0 -> ProfileScreen()
                         1 -> TradingScreen()
@@ -150,4 +155,3 @@ fun MainScreen(
             }
         }
     }
-}

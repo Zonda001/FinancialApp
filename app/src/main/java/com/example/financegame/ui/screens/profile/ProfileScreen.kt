@@ -67,7 +67,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Мій профіль", fontWeight = FontWeight.Bold) },
+                title = { Text("Мій профіль", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -81,7 +81,7 @@ fun ProfileScreen(
                         )
                     }
                 },
-                modifier = Modifier.height(80.dp)
+                modifier = Modifier.height(90.dp)
             )
         }
     ) { padding ->

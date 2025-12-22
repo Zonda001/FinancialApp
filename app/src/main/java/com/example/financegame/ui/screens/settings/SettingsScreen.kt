@@ -45,12 +45,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Налаштування", fontWeight = FontWeight.Bold) },
+                title = { Text("Налаштування", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
-                modifier = Modifier.height(80.dp)
+                modifier = Modifier.height(90.dp)
             )
         }
     ) { padding ->

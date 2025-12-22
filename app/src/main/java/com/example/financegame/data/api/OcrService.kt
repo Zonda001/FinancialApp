@@ -2,7 +2,6 @@ package com.example.financegame.data.api
 
 import android.graphics.Bitmap
 import android.util.Base64
-import com.example.financegame.BuildConfig  // 🔐 Імпорт BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -32,7 +31,7 @@ class OcrService {
 
     companion object {
         // 🔐 API ключ тепер береться з BuildConfig (безпечно!)
-        private val API_KEY = BuildConfig.GEMINI_API_KEY
+        private val API_KEY = "AIzaSyBouY1A03F_J8JMh0pCHyeumbmZFcOH_Q0"
 
         private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     }

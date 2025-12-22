@@ -163,8 +163,28 @@ class AchievementTracker(
         achievement?.let {
             if (!it.isUnlocked) {
                 database.achievementDao().unlockAchievement(it.id, System.currentTimeMillis())
+                
+                // Нараховуємо бали за досягнення
+                val user = database.userDao().getCurrentUser().first()
+                user?.let { currentUser ->
+                    val newExp = currentUser.experience + it.reward
+                    val newLevel = calculateLevel(newExp)
+                    val newTotalPoints = currentUser.totalPoints + it.reward
+                    
+                    database.userDao().updateUser(
+                        currentUser.copy(
+                            experience = newExp,
+                            level = newLevel,
+                            totalPoints = newTotalPoints
+                        )
+                    )
+                }
             }
         }
+    }
+    
+    private fun calculateLevel(experience: Int): Int {
+        return (kotlin.math.sqrt(experience.toDouble() / 100.0)).toInt() + 1
     }
 
     // ======================== ПУБЛІЧНІ МЕТОДИ ДЛЯ ВИКЛИКІВ ========================

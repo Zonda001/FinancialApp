@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
         Achievement::class,
         TradingPosition::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -207,35 +207,40 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "Додай першу витрату до журналу",
                     icon = "🎯",
                     requirement = 1,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Активний користувач",
                     description = "Додай 10 витрат",
                     icon = "📝",
                     requirement = 10,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Фінансовий гуру",
                     description = "Додай 50 витрат",
                     icon = "📊",
                     requirement = 50,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Майстер фінансів",
                     description = "Досягни 10 рівня",
                     icon = "👑",
                     requirement = 10,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Легенда",
                     description = "Досягни 20 рівня",
                     icon = "⭐",
                     requirement = 20,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
 
                 // Заощадження
@@ -244,28 +249,32 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "Заощадь 1000 грн",
                     icon = "💰",
                     requirement = 1000,
-                    category = AchievementCategory.SAVINGS
+                    category = AchievementCategory.SAVINGS,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Скарбничка",
                     description = "Заощадь 5000 грн",
                     icon = "🏦",
                     requirement = 5000,
-                    category = AchievementCategory.SAVINGS
+                    category = AchievementCategory.SAVINGS,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Фінансова свобода",
                     description = "Заощадь 10000 грн",
                     icon = "💎",
                     requirement = 10000,
-                    category = AchievementCategory.SAVINGS
+                    category = AchievementCategory.SAVINGS,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Мінімаліст",
                     description = "Витрать менше 100 грн за день протягом тижня",
                     icon = "🍃",
                     requirement = 7,
-                    category = AchievementCategory.SAVINGS
+                    category = AchievementCategory.SAVINGS,
+                    reward = 100
                 ),
 
                 // Квести
@@ -274,21 +283,24 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "Виконай 5 квестів",
                     icon = "🏆",
                     requirement = 5,
-                    category = AchievementCategory.QUESTS
+                    category = AchievementCategory.QUESTS,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Шукач пригод",
                     description = "Виконай 15 квестів",
                     icon = "🗺️",
                     requirement = 15,
-                    category = AchievementCategory.QUESTS
+                    category = AchievementCategory.QUESTS,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Легендарний герой",
                     description = "Виконай 30 квестів",
                     icon = "🎖️",
                     requirement = 30,
-                    category = AchievementCategory.QUESTS
+                    category = AchievementCategory.QUESTS,
+                    reward = 100
                 ),
 
                 // Серії
@@ -297,21 +309,24 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "Відстежуй витрати 7 днів поспіль",
                     icon = "🔥",
                     requirement = 7,
-                    category = AchievementCategory.STREAK
+                    category = AchievementCategory.STREAK,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Місячна відданість",
                     description = "Відстежуй витрати 30 днів поспіль",
                     icon = "⚡",
                     requirement = 30,
-                    category = AchievementCategory.STREAK
+                    category = AchievementCategory.STREAK,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Незламний",
                     description = "Відстежуй витрати 100 днів поспіль",
                     icon = "💪",
                     requirement = 100,
-                    category = AchievementCategory.STREAK
+                    category = AchievementCategory.STREAK,
+                    reward = 100
                 ),
 
                 // Бонусні досягнення
@@ -320,28 +335,32 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "Додай опис до 50 витрат",
                     icon = "✨",
                     requirement = 50,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Різноманітність",
                     description = "Використай всі 8 категорій витрат",
                     icon = "🎨",
                     requirement = 8,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Ранкова пташка",
                     description = "Додай витрату до 9 ранку",
                     icon = "🌅",
                     requirement = 1,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 ),
                 Achievement(
                     title = "Нічний дозор",
                     description = "Додай витрату після 23:00",
                     icon = "🌙",
                     requirement = 1,
-                    category = AchievementCategory.GENERAL
+                    category = AchievementCategory.GENERAL,
+                    reward = 100
                 )
             )
             achievements.forEach { achievementDao.insertAchievement(it) }

@@ -74,7 +74,8 @@ data class Achievement(
     val unlockedAt: Long? = null,
     val requirement: Int = 0,             // Вимога для відкриття
     val currentProgress: Int = 0,
-    val category: AchievementCategory = AchievementCategory.GENERAL
+    val category: AchievementCategory = AchievementCategory.GENERAL,
+    val reward: Int = 100                 // Бали за розблокування досягнення
 )
 
 enum class AchievementCategory {
